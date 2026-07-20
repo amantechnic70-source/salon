@@ -27,6 +27,12 @@ export class Staff {
     branchId: Types.ObjectId;
 
     @Prop({
+        type: Types.ObjectId,
+        ref: 'Role',
+    })
+    roleId: Types.ObjectId;
+
+    @Prop({
         required: true,
     })
     name: string;

@@ -73,6 +73,19 @@ export class MailProcessor extends WorkerHost {
 
                 break;
 
+            case 'send-otp-admin':
+
+                await this.mailService.sendMail({
+
+                    email: job.data.email,
+                    subject: job.data.subject,
+                    html: job.data.html,
+
+                });
+
+                break;
+
+
 
         }
 

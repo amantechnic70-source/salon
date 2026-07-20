@@ -52,6 +52,19 @@ export class MailQueueService {
       data,
 
     );
+  }
+
+  async sendOTPEmailAdmin(
+    data: any,
+  ) {
+
+    await this.mailQueue.add(
+
+      'send-otp-admin',
+
+      data,
+
+    );
 
   }
 }

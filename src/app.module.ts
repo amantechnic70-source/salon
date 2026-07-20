@@ -23,6 +23,7 @@ import { RedisModule } from './redis/redis.module';
 import { QueuesModule } from './queues/queues.module';
 import { SubscriptionModule } from './subscriptions/subscriptions.module';
 import { BranchModule } from './branches/branches.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
 
@@ -100,6 +101,8 @@ import { BranchModule } from './branches/branches.module';
     RedisModule,
 
     QueuesModule,
+
+    AdminModule,
 
   ],
 
