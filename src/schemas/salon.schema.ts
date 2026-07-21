@@ -77,10 +77,6 @@ export class Salon {
 export const SalonSchema = SchemaFactory.createForClass(Salon);
 
 SalonSchema.index({
-    salonId: 1,
-});
-
-SalonSchema.index({
     city: 1,
 });
 

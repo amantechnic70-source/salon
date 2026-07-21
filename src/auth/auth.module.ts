@@ -6,6 +6,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 import { UsersModule } from '../users/users.module';
+import { RedisModule } from 'src/redis/redis.module';
+import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { UsersModule } from '../users/users.module';
         expiresIn: '1d',
       },
     }),
+    RedisModule,
+    MailQueueModule,
   ],
 
   controllers: [AuthController],

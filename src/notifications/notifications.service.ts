@@ -5,7 +5,7 @@ import { GetNotificationsDto } from './dto/get-notifications.dto';
 import { MarkAsReadDto } from './dto/mark-as-read.dto';
 import { UpdateNotificationStatusDto } from './dto/update-notification-status.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { NotificationDocument } from 'src/schemas/notification.schema';
+import { NotificationDocument, Notifications } from 'src/schemas/notification.schema';
 import { Model } from 'mongoose';
 import { User, UserDocument } from 'src/schemas/user.schema';
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -14,7 +14,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 export class NotificationsService {
 
     constructor(
-        @InjectModel(Notification.name)
+        @InjectModel(Notifications.name)
         private readonly notificationModel:
             Model<NotificationDocument>,
 

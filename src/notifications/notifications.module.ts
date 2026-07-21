@@ -3,7 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
-import { NotificationSchema } from 'src/schemas/notification.schema';
+import { NotificationSchema, Notifications } from 'src/schemas/notification.schema';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
 
@@ -12,8 +13,13 @@ import { NotificationSchema } from 'src/schemas/notification.schema';
         MongooseModule.forFeature([
 
             {
-                name: Notification.name,
+                name: Notifications.name,
                 schema: NotificationSchema,
+            },
+
+            {
+                name: User.name,
+                schema: UserSchema,
             },
 
         ]),
@@ -33,4 +39,4 @@ import { NotificationSchema } from 'src/schemas/notification.schema';
     ],
 
 })
-export class NotificationsModule {}
+export class NotificationsModule { }

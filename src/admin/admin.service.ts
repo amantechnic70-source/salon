@@ -15,8 +15,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { Salon, SalonDocument } from 'src/schemas/salon.schema';
 import { Customer, CustomerDocument } from 'src/schemas/customer.schema';
 import { Invoice, InvoiceDocument } from 'src/schemas/invoice.schema';
-import { Subscription } from 'rxjs';
-import { SubscriptionDocument } from 'src/schemas/subscription.schema';
+import { Subscription, SubscriptionDocument } from 'src/schemas/subscription.schema';
 import { PlatformSetting, PlatformSettingDocument } from 'src/schemas/platform-setting.schema';
 import { JwtService } from '@nestjs/jwt';
 import { generateUserId } from 'src/common/utils/generate-user-id';
@@ -26,15 +25,16 @@ import * as bcrypt from 'bcrypt';
 export class AdminService {
 
     constructor(
-        @InjectModel(User.name)
-        private readonly userModel:
-            Model<UserDocument>,
 
         private readonly redisService:
             RedisService,
 
         private readonly mailQueueService:
             MailQueueService,
+
+        @InjectModel(User.name)
+        private readonly userModel:
+            Model<UserDocument>,
 
         @InjectModel(Salon.name)
         private readonly salonModel:

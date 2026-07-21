@@ -8,6 +8,8 @@ import {
   User,
   UserSchema,
 } from '../schemas/user.schema';
+import { MailModule } from 'src/mail/mail.module';
+import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import {
         schema: UserSchema,
       },
     ]),
+    MailModule,
+    MailQueueModule
   ],
 
   controllers: [UsersController],

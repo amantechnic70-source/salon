@@ -44,6 +44,11 @@ import {
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { PlatformSetting, PlatformSettingSchema } from 'src/schemas/platform-setting.schema';
+import { RedisService } from 'src/redis/redis.service';
+import { MailQueueService } from 'src/queues/mail-queue/mail-queue.service';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
 
@@ -97,6 +102,15 @@ import { PlatformSetting, PlatformSettingSchema } from 'src/schemas/platform-set
             },
 
         ]),
+
+        MailQueueModule,
+        RedisModule,
+        JwtModule.register({
+            secret: process.env.JWT_SECRET,
+            signOptions: {
+                expiresIn: '1d',
+            },
+        }),
 
     ],
 

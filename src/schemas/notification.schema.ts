@@ -2,10 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
 export type NotificationDocument =
-    Notification & Document;
+    Notifications & Document;
 
 @Schema({ timestamps: true })
-export class Notification {
+export class Notifications {
 
     @Prop({
         required: true,
@@ -60,7 +60,7 @@ export class Notification {
 
 export const NotificationSchema =
     SchemaFactory.createForClass(
-        Notification,
+        Notifications,
     );
 
 

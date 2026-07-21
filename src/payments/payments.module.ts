@@ -15,9 +15,23 @@ import {
 import { PaymentsService } from './payments.service';
 import { RazorpayService } from './providers/razorpay/razorpay.service';
 
+import {
+  Subscription,
+  SubscriptionSchema,
+} from '../schemas/subscription.schema';
+
+import {
+  SubscriptionPlan,
+  SubscriptionPlanSchema,
+} from '../schemas/subscription-plan.schema';
+
+import {
+  Salon,
+  SalonSchema,
+} from '../schemas/salon.schema';
+
 @Module({
   imports: [
-
     MongooseModule.forFeature([
 
       {
@@ -30,8 +44,22 @@ import { RazorpayService } from './providers/razorpay/razorpay.service';
         schema: TransactionSchema,
       },
 
-    ]),
+      {
+        name: Subscription.name,
+        schema: SubscriptionSchema,
+      },
 
+      {
+        name: SubscriptionPlan.name,
+        schema: SubscriptionPlanSchema,
+      },
+
+      {
+        name: Salon.name,
+        schema: SalonSchema,
+      },
+
+    ]),
   ],
 
   controllers: [
@@ -39,12 +67,12 @@ import { RazorpayService } from './providers/razorpay/razorpay.service';
   ],
 
   providers: [
-    PaymentsService, RazorpayService
+    PaymentsService,
+    RazorpayService,
   ],
 
   exports: [
     PaymentsService,
   ],
-
 })
 export class PaymentsModule { }

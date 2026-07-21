@@ -18,6 +18,7 @@ import {
 } from '../schemas/salon.schema';
 import { SubscriptionController } from './subscriptions.controller';
 import { SubscriptionService } from './subscriptions.service';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
     imports: [
@@ -34,6 +35,10 @@ import { SubscriptionService } from './subscriptions.service';
                 name: Salon.name,
                 schema: SalonSchema,
             },
+            {
+                name: User.name,
+                schema: UserSchema,
+            },
         ]),
     ],
     controllers: [
@@ -46,4 +51,4 @@ import { SubscriptionService } from './subscriptions.service';
         SubscriptionService,
     ],
 })
-export class SubscriptionModule {}
+export class SubscriptionModule { }
