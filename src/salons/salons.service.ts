@@ -75,8 +75,7 @@ export class SalonsService {
             );
         }
 
-        const totalSalon =
-            await this.salonModel.countDocuments();
+        const totalSalon = await this.salonModel.countDocuments();
 
         const salonId =
             `SAL${String(
@@ -85,37 +84,23 @@ export class SalonsService {
 
         const salon =
             await this.salonModel.create({
-
                 salonId,
-
                 ownerId: user._id,
-
                 ...dto,
-
                 isVerified: false,
-
                 isActive: true,
-
                 isDeleted: false,
-
                 isSubscriptionActive: false,
 
             });
 
-        user.salonId =
-            salon._id as Types.ObjectId;
-
+        user.salonId = salon._id as Types.ObjectId;
         await user.save();
 
         return {
-
             success: true,
-
-            message:
-                'Salon created successfully.',
-
+            message: 'Salon created successfully.',
             data: salon,
-
         };
 
     }

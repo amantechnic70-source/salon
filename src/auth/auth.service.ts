@@ -64,26 +64,16 @@ export class AuthService {
             await this.userModel.create({
 
                 name: dto.ownerName,
-
                 email: dto.email,
-
                 phone: dto.phone,
-
-                password:
-                    hashedPassword,
-
-                role:
-                    'SALON_OWNER',
+                password: hashedPassword,
+                role: 'SALON_OWNER',
 
             });
 
         return {
-
             success: true,
-
-            message:
-                'Registration successful',
-
+            message: 'Registration successful',
             data: user,
 
         };
@@ -112,7 +102,7 @@ export class AuthService {
         if (!user) {
 
             throw new UnauthorizedException(
-                'Invalid credentials',
+                'User not found, please go first signup',
             );
 
         }
@@ -132,13 +122,9 @@ export class AuthService {
         }
 
         const payload = {
-
             sub: user._id,
-
             email: user.email,
-
             role: user.role,
-
             salonId: user.salonId,
         };
 
@@ -148,12 +134,16 @@ export class AuthService {
             );
 
         return {
-
             success: true,
-
             accessToken,
-
-            user,
+            user: {
+                id: user._id,
+                userId: user.userId,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                salonId: user.salonId,
+            },
         };
 
     }

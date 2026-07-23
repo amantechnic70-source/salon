@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -29,25 +29,6 @@ import { AdminModule } from './admin/admin.module';
 
   imports: [
 
-    JwtModule.register({
-
-      secret:
-        process.env.JWT_SECRET,
-
-      signOptions: {
-
-        expiresIn:
-
-          (
-            process.env.JWT_EXPIRES_IN
-            ?? '1d'
-          ) as StringValue,
-
-      },
-
-    }),
-
-
     ConfigModule.forRoot({
 
       isGlobal: true,
@@ -55,11 +36,48 @@ import { AdminModule } from './admin/admin.module';
     }),
 
 
-    MongooseModule.forRoot(
+    // JwtModule.register({
 
-      process.env.MONGODB_URI!,
+    //   secret:
+    //     process.env.JWT_SECRET,
 
-    ),
+    //   signOptions: {
+
+    //     expiresIn:
+
+    //       (
+    //         process.env.JWT_EXPIRES_IN
+    //         ?? '1d'
+    //       ) as StringValue,
+
+    //   },
+
+    // }),
+
+
+    MongooseModule.forRootAsync({
+
+      inject: [
+
+        ConfigService,
+
+      ],
+
+      useFactory: (
+
+        configService: ConfigService,
+
+      ) => ({
+
+        uri:
+
+          configService.get<string>(
+            "MONGODB_URI",
+          ),
+
+      }),
+
+    }),
 
 
     AuthModule,
