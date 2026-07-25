@@ -89,22 +89,16 @@ export class AdminService {
             300,
         );
 
-        await this.mailQueueService
-            .sendOTPEmailAdmin({
-
-                to: dto.email,
-
-                subject:
-                    'Admin OTP Verification',
-
-                html: `
-                <h2>Welcome to Salon Marketplace</h2>
-                <p>Your OTP is:</p>
-                <h1>${otp}</h1>
-                <p>This OTP is valid for 5 minutes.</p>
-            `,
-
-            });
+        await this.mailQueueService.sendOTPEmailAdmin({
+            email: dto.email.toLowerCase(),   // was: to: dto.email
+            subject: 'Admin OTP Verification',
+            html: `
+        <h2>Welcome to Salon Marketplace</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This OTP is valid for 5 minutes.</p>
+    `,
+        });
 
         return {
 
