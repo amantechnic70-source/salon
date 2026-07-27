@@ -29,6 +29,7 @@ import {
   Salon,
   SalonSchema,
 } from '../schemas/salon.schema';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
   imports: [
@@ -58,6 +59,15 @@ import {
         name: Salon.name,
         schema: SalonSchema,
       },
+
+      {
+        name:
+          User.name,
+
+        schema:
+          UserSchema,
+      },
+
 
     ]),
   ],

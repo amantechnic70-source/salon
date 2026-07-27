@@ -304,53 +304,36 @@ export class AuthService {
 
     }
 
-    async forgotPassword(
-        dto: ForgotPasswordDto,
-    ) {
-
-        // Check user exists
-
+    async forgotPassword(dto: ForgotPasswordDto) {
         const user = await this.userModel.findOne({
             email: dto.email,
         });
 
         if (!user) {
-
-            throw new BadRequestException(
-                'User not found',
-            );
-
+            throw new BadRequestException('User not found');
         }
-
-        // Generate reset token
 
         const token = uuidv4();
 
+        const redisKey = `reset-password:${token}`;
 
-        // Store token in redis for 15 minutes
-
+        // Store FIRST
         await this.redisService.set(
-
-            `reset-password:${token}`,
-
+            redisKey,
             user.email,
-
-            900,
-
+            900, // 15 minutes
         );
 
+        // Then test it
+        const check = await this.redisService.get(redisKey);
 
-        // Generate reset link
+        console.log('🔑 Redis key:', redisKey);
+        console.log('🔍 Immediate read-back:', check);
 
         const resetLink =
-
-            `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-
-
-        // Prepare email template
+            `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
 
         const html = `
-
         <h2>Reset Password</h2>
 
         <p>Hello ${user.name},</p>
@@ -370,32 +353,18 @@ export class AuthService {
         <p>
             This link will expire in 15 minutes.
         </p>
-
     `;
 
-
-        // Push email into queue
-
         await this.mailQueueService.sendForgotPasswordEmail({
-
             email: user.email,
-
             subject: 'Reset Password',
-
             html,
-
         });
 
-
         return {
-
             success: true,
-
-            message:
-                'Password reset link sent successfully.',
-
+            message: 'Password reset link sent successfully.',
         };
-
     }
 
     async resetPassword(
@@ -404,11 +373,14 @@ export class AuthService {
 
         // Get email from Redis
 
+        console.log('🔍 Looking up token:', dto.token);
+
         const email = await this.redisService.get(
 
             `reset-password:${dto.token}`,
 
         );
+        console.log('🔍 Redis returned:', email);
 
 
         // Check token validity
@@ -466,7 +438,7 @@ export class AuthService {
 
         await this.redisService.del(
 
-            `reset-password:${dto.token}`,
+            `auth/reset-password:${dto.token}`,
 
         );
 
