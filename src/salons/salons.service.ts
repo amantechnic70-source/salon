@@ -57,16 +57,26 @@ export class SalonsService {
         }
 
         if (
-            user.role !== UserRole.SALON_OWNER
+            user.role !==
+            UserRole.SALON_OWNER
         ) {
             throw new UnauthorizedException(
                 'Only salon owners can create salons.',
             );
         }
 
+        // Prevent duplicate salon
+
+        if (user.salonId) {
+            throw new BadRequestException(
+                'Salon already created for this account.',
+            );
+        }
+
         const existingSalon =
             await this.salonModel.findOne({
                 ownerId: user._id,
+                isDeleted: false,
             });
 
         if (existingSalon) {
@@ -75,7 +85,8 @@ export class SalonsService {
             );
         }
 
-        const totalSalon = await this.salonModel.countDocuments();
+        const totalSalon =
+            await this.salonModel.countDocuments();
 
         const salonId =
             `SAL${String(
@@ -84,25 +95,63 @@ export class SalonsService {
 
         const salon =
             await this.salonModel.create({
+
                 salonId,
-                ownerId: user._id,
+
+                ownerId:
+                    user._id,
+
                 ...dto,
-                isVerified: false,
-                isActive: true,
-                isDeleted: false,
-                isSubscriptionActive: false,
+
+                isVerified:
+                    false,
+
+                isActive:
+                    true,
+
+                isDeleted:
+                    false,
+
+                // Don't blindly set this true here.
+                // Subscription should come from
+                // your subscription/payment data.
+                isSubscriptionActive:
+                    false,
 
             });
 
-        user.salonId = salon._id as Types.ObjectId;
+        // Save Salon MongoDB ObjectId
+        // inside User
+
+        user.salonId =
+            salon._id as Types.ObjectId;
+
         await user.save();
 
         return {
-            success: true,
-            message: 'Salon created successfully.',
-            data: salon,
-        };
 
+            success: true,
+
+            message:
+                'Salon created successfully.',
+
+            data: {
+
+                salon,
+
+                user: {
+
+                    userId:
+                        user.userId,
+
+                    salonId:
+                        user.salonId,
+
+                },
+
+            },
+
+        };
     }
 
     async profile(

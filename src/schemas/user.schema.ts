@@ -27,8 +27,18 @@ export class User {
     @Prop({ required: true })
     role: string;
 
-    @Prop({ type: Types.ObjectId, ref: 'Salon' })
-    salonId: Types.ObjectId;
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Salon',
+        default: null,
+    })
+    salonId: Types.ObjectId | null;
+
+    @Prop({
+        default: false,
+    })
+    isSubscriptionActive: boolean;
+
 
     @Prop({ default: false })
     isVerified: boolean;

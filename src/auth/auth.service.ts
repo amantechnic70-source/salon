@@ -143,6 +143,8 @@ export class AuthService {
                 email: user.email,
                 role: user.role,
                 salonId: user.salonId,
+                active: user.isActive,
+                isSubscriptionActive: user.isSubscriptionActive
             },
         };
 

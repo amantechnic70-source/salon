@@ -906,6 +906,9 @@ export class PaymentsService {
 
             });
 
+        user.isSubscriptionActive = true;
+        await user.save();
+
 
         // ==========================================
         // 15. EXISTING SALON CASE
