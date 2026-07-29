@@ -12,6 +12,7 @@ import { Subscription, SubscriptionDocument } from 'src/schemas/subscription.sch
 import { SubscriptionPlan, SubscriptionPlanDocument } from 'src/schemas/subscription-plan.schema';
 import { SubscriptionStatus } from 'src/common/enums/subscription-status.enum';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { User, UserDocument } from 'src/schemas/user.schema';
 
 @Injectable()
 export class BranchesService {
@@ -34,6 +35,10 @@ export class BranchesService {
         private readonly planModel:
             Model<SubscriptionPlanDocument>,
 
+        @InjectModel(User.name)
+        private readonly userModel:
+            Model<UserDocument>,
+
     ) { }
 
     async create(
@@ -41,34 +46,117 @@ export class BranchesService {
         dto: CreateBranchDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        // ==========================================
+        // FIND USER
+        // ==========================================
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+        // ==========================================
+        // FIND SALON BY OWNER
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
 
-        if (!salon.isSubscriptionActive) {
+
+        // ==========================================
+        // SYNC USER SALON ID
+        // ==========================================
+
+        if (
+            !user.salonId ||
+            user.salonId.toString() !==
+            salon._id.toString()
+        ) {
+
+            user.salonId =
+                salon._id;
+
+            await user.save();
+
+        }
+
+
+        // ==========================================
+        // CHECK SALON SUBSCRIPTION
+        // ==========================================
+
+        if (!user.isSubscriptionActive) {
+
             throw new BadRequestException(
                 'Please activate your subscription plan first.',
             );
+
         }
+
+
+        // ==========================================
+        // FIND ACTIVE SUBSCRIPTION
+        // ==========================================
 
         const subscription =
             await this.subscriptionModel.findOne({
-                salonId: salon._id,
-                status: SubscriptionStatus.ACTIVE,
+
+                userId:
+                    user._id,
+
+                status:
+                    SubscriptionStatus.ACTIVE,
+
+                isActive:
+                    true,
+
             });
 
         if (!subscription) {
+
             throw new BadRequestException(
                 'Active subscription not found.',
             );
+
         }
+
+
+        // ==========================================
+        // FIND PLAN
+        // ==========================================
 
         const plan =
             await this.planModel.findById(
@@ -76,46 +164,82 @@ export class BranchesService {
             );
 
         if (!plan) {
+
             throw new BadRequestException(
                 'Subscription plan not found.',
             );
+
         }
+
+
+        // ==========================================
+        // CHECK BRANCH LIMIT
+        // ==========================================
 
         const totalBranches =
             await this.branchModel.countDocuments({
-                salonId: salon._id,
-                isDeleted: false,
+
+                salonId:
+                    salon._id,
+
+                isDeleted:
+                    false,
+
             });
 
         if (
             totalBranches >=
             plan.maxBranches
         ) {
+
             throw new BadRequestException(
                 `You can create only ${plan.maxBranches} branches in your current plan.`,
             );
+
         }
 
+
+        // ==========================================
+        // GENERATE BRANCH ID
+        // ==========================================
+
         const totalBranch =
-            await this.branchModel.countDocuments();
+            await this.branchModel
+                .countDocuments();
 
         const branchId =
             `BR${String(
                 totalBranch + 1,
             ).padStart(6, '0')}`;
 
+
+        // ==========================================
+        // CREATE BRANCH
+        // ==========================================
+
         const branch =
             await this.branchModel.create({
+
                 branchId,
-                salonId: salon._id,
+
+                salonId:
+                    salon._id,
+
                 ...dto,
+
             });
 
+
         return {
+
             success: true,
+
             message:
                 'Branch created successfully.',
-            data: branch,
+
+            data:
+                branch,
+
         };
 
     }
@@ -125,14 +249,45 @@ export class BranchesService {
         query: GetBranchesDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
 
@@ -190,14 +345,45 @@ export class BranchesService {
         id: string,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
 
@@ -226,17 +412,47 @@ export class BranchesService {
         dto: UpdateBranchDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
 
-        if (!salon) {
+        if (!user) {
             throw new BadRequestException(
-                'Salon not found.',
+                'User not found.',
             );
         }
 
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
+
+        if (!salon) {
+            throw new BadRequestException(
+                'Salon not found. Please complete salon onboarding first.',
+            );
+        }
         const branch = await this.branchModel.findOne({
             _id: id,
             salonId: salon._id,

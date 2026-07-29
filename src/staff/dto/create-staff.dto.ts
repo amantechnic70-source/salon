@@ -4,6 +4,7 @@ import {
     IsOptional,
     IsString,
     Matches,
+    MinLength,
 } from 'class-validator';
 
 export class CreateStaffDto {
@@ -14,9 +15,12 @@ export class CreateStaffDto {
     @IsString()
     name: string;
 
-    @IsOptional()
     @IsEmail()
-    email?: string;
+    email: string;
+
+    @IsString()
+    @MinLength(8)
+    password: string;
 
     @IsOptional()
     @Matches(/^[6-9]\d{9}$/)

@@ -29,6 +29,7 @@ import {
 
 import { StaffController } from './staff.controller';
 import { StaffService } from './staff.service';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
   imports: [
@@ -52,6 +53,10 @@ import { StaffService } from './staff.service';
       {
         name: SubscriptionPlan.name,
         schema: SubscriptionPlanSchema,
+      },
+      {
+        name: User.name,
+        schema: UserSchema,
       },
     ]),
   ],

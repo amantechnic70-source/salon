@@ -13,6 +13,9 @@ import { Subscription, SubscriptionDocument } from 'src/schemas/subscription.sch
 import { SubscriptionPlan, SubscriptionPlanDocument } from 'src/schemas/subscription-plan.schema';
 import { SubscriptionStatus } from 'src/common/enums/subscription-status.enum';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { User, UserDocument } from 'src/schemas/user.schema';
+import { generateUserId } from 'src/common/utils/generate-user-id';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class StaffService {
@@ -32,6 +35,11 @@ export class StaffService {
 
         @InjectModel(SubscriptionPlan.name)
         private readonly planModel: Model<SubscriptionPlanDocument>,
+
+        @InjectModel(User.name)
+        private readonly userModel: Model<UserDocument>,
+
+
     ) { }
 
     async create(
@@ -39,14 +47,49 @@ export class StaffService {
         dto: CreateStaffDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+        // ==========================================
+        // FIND SALON BY OWNER
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
 
@@ -70,14 +113,24 @@ export class StaffService {
 
         const subscription =
             await this.subscriptionModel.findOne({
-                salonId: salon._id,
-                status: SubscriptionStatus.ACTIVE,
+
+                userId:
+                    user._id,
+
+                status:
+                    SubscriptionStatus.ACTIVE,
+
+                isActive:
+                    true,
+
             });
 
         if (!subscription) {
+
             throw new BadRequestException(
                 'Active subscription not found.',
             );
+
         }
 
         const plan =
@@ -108,6 +161,69 @@ export class StaffService {
 
         const totalStaffCount =
             await this.staffModel.countDocuments();
+
+        const existingUser =
+            await this.userModel.findOne({
+                $or: [
+                    {
+                        email:
+                            dto.email.toLowerCase(),
+                    },
+                    {
+                        phone:
+                            dto.phone,
+                    },
+                ],
+            });
+
+        if (existingUser) {
+            throw new BadRequestException(
+                'A user with this email or phone already exists.',
+            );
+        }
+
+        const hashedPassword =
+            await bcrypt.hash(
+                dto.password,
+                10,
+            );
+
+        const staffUser =
+            await this.userModel.create({
+
+                userId:
+                    generateUserId(
+                        UserRole.STAFF,
+                    ),
+
+                name:
+                    dto.name,
+
+                email:
+                    dto.email.toLowerCase(),
+
+                phone:
+                    dto.phone,
+
+                password:
+                    hashedPassword,
+
+                role:
+                    UserRole.STAFF,
+
+                salonId:
+                    salon._id,
+
+                isVerified:
+                    true,
+
+                isActive:
+                    true,
+
+                isDeleted:
+                    false,
+
+            });
 
         const staffId =
             `STF${String(
@@ -145,16 +261,51 @@ export class StaffService {
         query: GetStaffDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+        // ==========================================
+        // FIND SALON BY OWNER
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
+
 
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 10;
@@ -216,16 +367,51 @@ export class StaffService {
         id: string,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+        // ==========================================
+        // FIND SALON BY OWNER
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
+
 
         const staff = await this.staffModel.findOne({
             _id: id,
@@ -252,14 +438,48 @@ export class StaffService {
         dto: UpdateStaffDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+        // ==========================================
+        // FIND SALON BY OWNER
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
 
@@ -313,16 +533,51 @@ export class StaffService {
         id: string,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+
+        // ==========================================
+        // FIND SALON BY OWNER
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                ownerId:
+                    user._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
             throw new BadRequestException(
-                'Salon not found.',
+                'Salon not found. Please complete salon onboarding first.',
             );
         }
+
 
         const staff = await this.staffModel.findOne({
             _id: id,

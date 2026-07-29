@@ -23,6 +23,7 @@ import {
 } from '../schemas/subscription-plan.schema';
 import { BranchesController } from './branches.controller';
 import { BranchesService } from './branches.service';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 
 @Module({
@@ -43,6 +44,10 @@ import { BranchesService } from './branches.service';
       {
         name: SubscriptionPlan.name,
         schema: SubscriptionPlanSchema,
+      },
+      {
+        name: User.name,
+        schema: UserSchema,
       },
     ]),
   ],
