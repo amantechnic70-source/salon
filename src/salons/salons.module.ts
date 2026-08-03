@@ -6,6 +6,7 @@ import { SalonsService } from './salons.service';
 
 import { Salon, SalonSchema } from 'src/schemas/salon.schema';
 import { User, UserSchema } from 'src/schemas/user.schema';
+import { Subscription, SubscriptionSchema } from 'src/schemas/subscription.schema';
 
 @Module({
     imports: [
@@ -17,6 +18,10 @@ import { User, UserSchema } from 'src/schemas/user.schema';
             {
                 name: User.name,
                 schema: UserSchema,
+            },
+            {
+                name: Subscription.name,
+                schema: SubscriptionSchema,
             },
         ]),
     ],
@@ -30,4 +35,4 @@ import { User, UserSchema } from 'src/schemas/user.schema';
         SalonsService,
     ],
 })
-export class SalonsModule {}
+export class SalonsModule { }

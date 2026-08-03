@@ -16,6 +16,18 @@ export class Salon {
     })
     ownerId: Types.ObjectId;
 
+    // 👇 Store staff references
+    @Prop({
+        type: [
+            {
+                type: Types.ObjectId,
+                ref: 'Staff',
+            },
+        ],
+        default: [],
+    })
+    staffs: Types.ObjectId[];
+
     @Prop({ required: true })
     name: string;
 

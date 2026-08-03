@@ -24,6 +24,8 @@ import { GetSalonsDto } from './dto/get-salons.dto';
 import { UpdateSalonStatusDto } from './dto/update-salon-status.dto';
 
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { Subscription, SubscriptionDocument } from 'src/schemas/subscription.schema';
+import { SubscriptionStatus } from 'src/common/enums/subscription-status.enum';
 
 @Injectable()
 export class SalonsService {
@@ -37,6 +39,9 @@ export class SalonsService {
         @InjectModel(User.name)
         private readonly userModel:
             Model<UserDocument>,
+
+        @InjectModel(Subscription.name)
+        private readonly subscriptionModel: Model<SubscriptionDocument>,
 
     ) { }
 
@@ -127,6 +132,22 @@ export class SalonsService {
             salon._id as Types.ObjectId;
 
         await user.save();
+
+        await this.subscriptionModel.findOneAndUpdate(
+            {
+                userId: user._id,
+                status: SubscriptionStatus.ACTIVE,
+                isActive: true,
+            },
+            {
+                $set: {
+                    salonId: salon._id,
+                },
+            },
+            {
+                new: true,
+            },
+        );
 
         return {
 

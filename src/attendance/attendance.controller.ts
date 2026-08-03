@@ -33,13 +33,12 @@ export class AttendanceController {
     @UseGuards(JwtAuthGuard)
     checkIn(
         @CurrentUser() user: any,
-        @Body() dto: CheckInDto,
     ) {
         return this.attendanceService.checkIn(
             user.sub,
-            dto,
         );
     }
+
 
 
     @Post('check-out')

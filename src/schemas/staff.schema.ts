@@ -13,6 +13,12 @@ export class Staff {
     staffId: string;
 
     @Prop({
+        required: true,
+        unique: true,
+    })
+    userId: string;
+
+    @Prop({
         type: Types.ObjectId,
         ref: 'Salon',
         required: true,

@@ -23,6 +23,8 @@ import {
 
 import { AttendanceController } from './attendance.controller';
 import { AttendanceService } from './attendance.service';
+import { Subscription, SubscriptionSchema } from 'src/schemas/subscription.schema';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
 
@@ -48,6 +50,14 @@ import { AttendanceService } from './attendance.service';
       {
         name: Staff.name,
         schema: StaffSchema,
+      },
+      {
+        name: Subscription.name,
+        schema: SubscriptionSchema,
+      },
+      {
+        name: User.name,
+        schema: UserSchema,
       },
 
     ]),

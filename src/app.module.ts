@@ -24,6 +24,7 @@ import { QueuesModule } from './queues/queues.module';
 import { SubscriptionModule } from './subscriptions/subscriptions.module';
 import { BranchModule } from './branches/branches.module';
 import { AdminModule } from './admin/admin.module';
+import { AttendanceModule } from './attendance/attendance.module';
 
 @Module({
 
@@ -121,6 +122,8 @@ import { AdminModule } from './admin/admin.module';
     QueuesModule,
 
     AdminModule,
+
+    AttendanceModule
 
   ],
 

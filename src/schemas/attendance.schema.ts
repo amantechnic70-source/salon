@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { AttendanceStatus } from 'src/common/enums/attendanceStatus.status.enum';
 
 export type AttendanceDocument =
     Attendance & Document;
@@ -51,9 +52,11 @@ export class Attendance {
     workingHours: number;
 
     @Prop({
-        default: 'PRESENT',
+        type: String,
+        enum: AttendanceStatus,
+        default: AttendanceStatus.PRESENT,
     })
-    status: string;
+    status: AttendanceStatus;
 
     @Prop({
         default: false,

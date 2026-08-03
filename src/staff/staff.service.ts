@@ -188,13 +188,12 @@ export class StaffService {
                 10,
             );
 
+        const userIdGenerat = generateUserId(UserRole.STAFF);
+
         const staffUser =
             await this.userModel.create({
 
-                userId:
-                    generateUserId(
-                        UserRole.STAFF,
-                    ),
+                userId: userIdGenerat,
 
                 name:
                     dto.name,
@@ -231,6 +230,7 @@ export class StaffService {
             ).padStart(6, '0')}`;
 
         const staff = await this.staffModel.create({
+            userId: userIdGenerat,
             staffId,
             salonId: salon._id,
             branchId: dto.branchId,
@@ -246,6 +246,18 @@ export class StaffService {
             gender: dto.gender,
             description: dto.description,
         });
+
+        await this.salonModel.findByIdAndUpdate(
+            salon._id,
+            {
+                $push: {
+                    staffs: staff._id,
+                },
+            },
+            {
+                new: true,
+            },
+        );
 
         return {
             success: true,
