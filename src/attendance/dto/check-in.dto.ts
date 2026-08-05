@@ -7,7 +7,7 @@ import {
 export class CheckInDto {
 
     @IsMongoId()
-    staffId: string;
+    staffId: string | undefined;
 
     @IsOptional()
     @IsString()

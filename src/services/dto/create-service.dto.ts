@@ -1,7 +1,10 @@
 import {
     IsMongoId,
+    IsNumber,
     IsOptional,
     IsString,
+    Min,
+    Max,
 } from 'class-validator';
 
 export class CreateServiceDto {
@@ -28,10 +31,18 @@ export class CreateServiceDto {
     @IsString()
     genderType?: string;
 
+    @IsNumber()
+    @Min(0)
     price: number;
 
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Max(100)
     discount?: number;
 
+    @IsNumber()
+    @Min(1)
     duration: number;
 
 }

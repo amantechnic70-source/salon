@@ -18,6 +18,7 @@ import {
 
 import { ServicesController } from './services.controller';
 import { ServicesService } from './services.service';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
     imports: [
@@ -34,6 +35,10 @@ import { ServicesService } from './services.service';
                 name: Branch.name,
                 schema: BranchSchema,
             },
+            {
+                name: User.name,
+                schema: UserSchema,
+            },
         ]),
     ],
     controllers: [
@@ -46,4 +51,4 @@ import { ServicesService } from './services.service';
         ServicesService,
     ],
 })
-export class ServicesModule {}
+export class ServicesModule { }

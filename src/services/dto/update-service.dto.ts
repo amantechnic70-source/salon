@@ -1,7 +1,10 @@
 import {
     IsMongoId,
+    IsNumber,
     IsOptional,
     IsString,
+    Min,
+    Max,
 } from 'class-validator';
 
 export class UpdateServiceDto {
@@ -31,12 +34,19 @@ export class UpdateServiceDto {
     genderType?: string;
 
     @IsOptional()
+    @IsNumber()
+    @Min(0)
     price?: number;
 
     @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Max(100)
     discount?: number;
 
     @IsOptional()
+    @IsNumber()
+    @Min(1)
     duration?: number;
 
 }

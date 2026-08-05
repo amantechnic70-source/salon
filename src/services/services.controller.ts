@@ -39,7 +39,7 @@ export class ServicesController {
         );
     }
 
-    @Get()
+    @Get('all')
     @UseGuards(JwtAuthGuard)
     getAll(
         @CurrentUser() user: any,

@@ -130,7 +130,6 @@ export class AttendanceController {
 
 
     // SUPER ADMIN APIs
-
     @Get('admin/all')
     @UseGuards(JwtAuthGuard)
     getAllByAdmin(

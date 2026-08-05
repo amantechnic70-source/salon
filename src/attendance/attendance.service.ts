@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 import { CheckInDto } from './dto/check-in.dto';
 import { CheckOutDto } from './dto/check-out.dto';
@@ -49,10 +49,6 @@ export class AttendanceService {
         userId: string,
     ) {
 
-        // ==========================================
-        // 1. FIND LOGGED-IN USER
-        // ==========================================
-
         const user =
             await this.userModel.findById(
                 userId,
@@ -82,11 +78,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 2. CHECK USER ROLE
-        // ==========================================
-
         if (
             user.role !==
             UserRole.STAFF
@@ -97,13 +88,6 @@ export class AttendanceService {
             );
 
         }
-
-
-        // ==========================================
-        // 3. FIND STAFF PROFILE
-        // JWT sub = User._id
-        // Staff.userId = User._id
-        // ==========================================
 
         const staff =
             await this.staffModel.findOne({
@@ -124,11 +108,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 4. CHECK STAFF ACTIVE
-        // ==========================================
-
         if (!staff.isActive) {
 
             throw new BadRequestException(
@@ -137,11 +116,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 5. CHECK STAFF SALON
-        // ==========================================
-
         if (!staff.salonId) {
 
             throw new BadRequestException(
@@ -149,11 +123,6 @@ export class AttendanceService {
             );
 
         }
-
-
-        // ==========================================
-        // 6. FIND SALON
-        // ==========================================
 
         const salon =
             await this.salonModel.findOne({
@@ -174,11 +143,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 7. CHECK SALON ACTIVE
-        // ==========================================
-
         if (!salon.isActive) {
 
             throw new BadRequestException(
@@ -186,11 +150,6 @@ export class AttendanceService {
             );
 
         }
-
-
-        // ==========================================
-        // 8. CHECK SALON SUBSCRIPTION FLAG
-        // ==========================================
 
         if (!salon.isSubscriptionActive) {
 
@@ -200,10 +159,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 9. FIND ACTIVE SUBSCRIPTION
-        // ==========================================
 
         const now =
             new Date();
@@ -243,11 +198,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 10. CHECK STAFF BRANCH
-        // ==========================================
-
         if (!staff.branchId) {
 
             throw new BadRequestException(
@@ -256,11 +206,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 11. FIND BRANCH
-        // Also verify branch belongs to same salon
-        // ==========================================
 
         const branch =
             await this.branchModel.findOne({
@@ -284,11 +229,6 @@ export class AttendanceService {
 
         }
 
-
-        // ==========================================
-        // 12. CHECK BRANCH ACTIVE
-        // ==========================================
-
         if (!branch.isActive) {
 
             throw new BadRequestException(
@@ -296,11 +236,6 @@ export class AttendanceService {
             );
 
         }
-
-
-        // ==========================================
-        // 13. CREATE TODAY DATE RANGE
-        // ==========================================
 
         const startOfDay =
             new Date(now);
@@ -323,10 +258,6 @@ export class AttendanceService {
             999,
         );
 
-
-        // ==========================================
-        // 14. CHECK TODAY ATTENDANCE
-        // ==========================================
 
         const existingAttendance =
             await this.attendanceModel.findOne({
@@ -475,12 +406,73 @@ export class AttendanceService {
         dto: CheckOutDto,
     ) {
 
+        // ==========================================
+        // 1. FIND LOGGED-IN USER
+        // ==========================================
+
+        const user =
+            await this.userModel.findById(userId);
+
+        if (!user) {
+            throw new BadRequestException(
+                'User not found.',
+            );
+        }
+
+        if (user.isDeleted) {
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+        }
+
+        if (!user.isActive) {
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+        }
+
+        if (user.role !== UserRole.STAFF) {
+            throw new BadRequestException(
+                'Only staff members can check out.',
+            );
+        }
+
+        // ==========================================
+        // 2. FIND STAFF
+        // ==========================================
+
+        const staff =
+            await this.staffModel.findOne({
+
+                userId:
+                    user.userId,
+
+                isDeleted:
+                    false,
+
+            });
+
+        if (!staff) {
+            throw new BadRequestException(
+                'Staff profile not found.',
+            );
+        }
+
+        if (!staff.isActive) {
+            throw new BadRequestException(
+                'Staff account is inactive.',
+            );
+        }
+
+
         const salon =
             await this.salonModel.findOne({
 
-                ownerId: userId,
+                _id:
+                    staff.salonId,
 
-                isDeleted: false,
+                isDeleted:
+                    false,
 
             });
 
@@ -492,14 +484,60 @@ export class AttendanceService {
 
         }
 
+        // ==========================================
+        // 3. TODAY DATE RANGE
+        // ==========================================
+
+        const now =
+            new Date();
+
+        const startOfDay =
+            new Date(now);
+
+        startOfDay.setHours(
+            0,
+            0,
+            0,
+            0,
+        );
+
+        const endOfDay =
+            new Date(now);
+
+        endOfDay.setHours(
+            23,
+            59,
+            59,
+            999,
+        );
+
+        // ==========================================
+        // 4. FIND TODAY'S OPEN ATTENDANCE
+        // ==========================================
+
         const attendance =
             await this.attendanceModel.findOne({
 
-                attendanceId:
-                    dto.attendanceId,
+                staffId:
+                    staff._id,
 
-                salonId:
-                    salon._id,
+                date: {
+
+                    $gte:
+                        startOfDay,
+
+                    $lte:
+                        endOfDay,
+
+                },
+
+                checkOutTime:
+                {
+                    $in: [
+                        null,
+                        '',
+                    ],
+                },
 
                 isDeleted:
                     false,
@@ -509,53 +547,77 @@ export class AttendanceService {
         if (!attendance) {
 
             throw new BadRequestException(
-                'Attendance not found.',
+                'No active check-in found for today.',
             );
 
         }
+
+        // ==========================================
+        // 5. PREVENT DUPLICATE CHECKOUT
+        // ==========================================
 
         if (attendance.checkOutTime) {
 
             throw new BadRequestException(
-                'Staff has already checked out.',
+                'You have already checked out today.',
             );
 
         }
 
-        const now =
-            new Date();
+        // ==========================================
+        // 6. CALCULATE WORKING HOURS
+        // ==========================================
 
         const checkOutTime =
             now.toLocaleTimeString(
                 'en-IN',
                 {
 
-                    hour: '2-digit',
+                    hour12:
+                        false,
 
-                    minute: '2-digit',
+                    hour:
+                        '2-digit',
 
-                    hour12: true,
+                    minute:
+                        '2-digit',
+
+                    second:
+                        '2-digit',
+
+                    timeZone:
+                        'Asia/Kolkata',
 
                 },
-
             );
 
-        const checkInDateTime =
+        const checkIn =
             new Date(
                 `${attendance.date.toDateString()} ${attendance.checkInTime}`,
             );
 
-        const diffInMilliseconds =
+        const diffMs =
             now.getTime() -
-            checkInDateTime.getTime();
+            checkIn.getTime();
 
         const workingHours =
             Number(
                 (
-                    diffInMilliseconds /
+                    diffMs /
                     (1000 * 60 * 60)
                 ).toFixed(2),
             );
+
+        // ==========================================
+        // 7. HALF DAY
+        // ==========================================
+
+        attendance.isHalfDay =
+            workingHours < 4;
+
+        // ==========================================
+        // 8. UPDATE ATTENDANCE
+        // ==========================================
 
         attendance.checkOutTime =
             checkOutTime;
@@ -564,33 +626,22 @@ export class AttendanceService {
             workingHours;
 
         attendance.remarks =
-            dto.remarks ||
-            attendance.remarks;
-
-        if (workingHours < 4) {
-
-            attendance.isHalfDay =
-                true;
-
-            attendance.status =
-                AttendanceStatus.HALF_DAY;
-
-        } else {
-
-            attendance.isHalfDay =
-                false;
-
-            attendance.status =
-                AttendanceStatus.PRESENT;
-
-        }
+            dto.remarks || '';
 
         await attendance.save();
 
+        // ==========================================
+        // 9. RETURN
+        // ==========================================
+
         return {
-            success: true,
+
+            success:
+                true,
+
             message:
-                'Check-out successful.',
+                'Checked out successfully.',
+
             data:
                 attendance,
 

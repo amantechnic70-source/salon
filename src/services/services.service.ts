@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 import { Salon, SalonDocument } from 'src/schemas/salon.schema';
 import { Branch, BranchDocument } from 'src/schemas/branch.schema';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { User, UserDocument } from 'src/schemas/user.schema';
 
 @Injectable()
 export class ServicesService {
@@ -25,6 +26,10 @@ export class ServicesService {
         @InjectModel(Branch.name)
         private readonly branchModel:
             Model<BranchDocument>,
+
+        @InjectModel(User.name)
+        private readonly userModel:
+            Model<UserDocument>,
     ) { }
 
     async create(
@@ -32,34 +37,138 @@ export class ServicesService {
         dto: CreateServiceDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        // ==========================================
+        // FIND USER
+        // ==========================================
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+
+            throw new UnauthorizedException(
+                'User not found.',
+            );
+
+        }
+
+        if (user.isDeleted) {
+
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+
+        }
+
+        if (!user.isActive) {
+
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+
+        }
+
+        if (
+            user.role !==
+            UserRole.SALON_OWNER
+        ) {
+
+            throw new UnauthorizedException(
+                'Only salon owners can create services.',
+            );
+
+        }
+
+        // ==========================================
+        // CHECK SALON ID
+        // ==========================================
+
+        if (!user.salonId) {
+
+            throw new BadRequestException(
+                'Please complete salon onboarding first.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND SALON
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                _id:
+                    user.salonId,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
+
             throw new BadRequestException(
                 'Salon not found.',
             );
+
+        }
+
+        if (!salon.isActive) {
+
+            throw new BadRequestException(
+                'Salon is inactive.',
+            );
+
         }
 
         if (!salon.isSubscriptionActive) {
+
             throw new BadRequestException(
                 'Please activate your subscription plan first.',
             );
+
         }
 
-        const branch = await this.branchModel.findOne({
-            _id: dto.branchId,
-            salonId: salon._id,
-            isDeleted: false,
-        });
+        // ==========================================
+        // FIND BRANCH
+        // ==========================================
+
+        const branch =
+            await this.branchModel.findOne({
+
+                _id:
+                    dto.branchId,
+
+                salonId:
+                    salon._id,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!branch) {
+
             throw new BadRequestException(
                 'Branch not found.',
             );
+
         }
+
+        if (!branch.isActive) {
+
+            throw new BadRequestException(
+                'Branch is inactive.',
+            );
+
+        }
+
+        // ==========================================
+        // GENERATE SERVICE ID
+        // ==========================================
 
         const totalServices =
             await this.serviceModel.countDocuments();
@@ -67,27 +176,80 @@ export class ServicesService {
         const serviceId =
             `SER${String(
                 totalServices + 1,
-            ).padStart(6, '0')}`;
+            ).padStart(
+                6,
+                '0',
+            )}`;
+
+        // ==========================================
+        // CALCULATE DISCOUNT PRICE
+        // ==========================================
 
         const discountPrice =
             dto.discount
                 ? dto.price -
-                ((dto.price * dto.discount) / 100)
+                (
+                    dto.price *
+                    dto.discount
+                ) / 100
                 : dto.price;
+
+        // ==========================================
+        // CREATE SERVICE
+        // ==========================================
 
         const service =
             await this.serviceModel.create({
+
                 serviceId,
-                salonId: salon._id,
+
+                salonId:
+                    salon._id,
+
+                branchId:
+                    branch._id,
+
+                name:
+                    dto.name,
+
+                description:
+                    dto.description,
+
+                price:
+                    dto.price,
+
+                discount:
+                    dto.discount,
+
                 discountPrice,
-                ...dto,
+
+                duration:
+                    dto.duration,
+
+                serviceImage:
+                    dto.serviceImage,
+
+                category:
+                    dto.category,
+
+                isActive:
+                    true,
+
+                isDeleted:
+                    false,
+
             });
 
         return {
+
             success: true,
+
             message:
                 'Service created successfully.',
-            data: service,
+
+            data:
+                service,
+
         };
 
     }
@@ -97,16 +259,101 @@ export class ServicesService {
         query: GetServicesDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        // ==========================================
+        // FIND USER
+        // ==========================================
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+
+            throw new UnauthorizedException(
+                'User not found.',
+            );
+
+        }
+
+        if (user.isDeleted) {
+
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+
+        }
+
+        if (!user.isActive) {
+
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+
+        }
+
+        if (
+            user.role !==
+            UserRole.SALON_OWNER
+        ) {
+
+            throw new UnauthorizedException(
+                'Only salon owners can create services.',
+            );
+
+        }
+
+        // ==========================================
+        // CHECK SALON ID
+        // ==========================================
+
+        if (!user.salonId) {
+
+            throw new BadRequestException(
+                'Please complete salon onboarding first.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND SALON
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                _id:
+                    user.salonId,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
+
             throw new BadRequestException(
                 'Salon not found.',
             );
+
         }
+
+        if (!salon.isActive) {
+
+            throw new BadRequestException(
+                'Salon is inactive.',
+            );
+
+        }
+
+        if (!salon.isSubscriptionActive) {
+
+            throw new BadRequestException(
+                'Please activate your subscription plan first.',
+            );
+
+        }
+
 
         const page =
             Number(query.page) || 1;
@@ -182,16 +429,101 @@ export class ServicesService {
         id: string,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        // ==========================================
+        // FIND USER
+        // ==========================================
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+
+            throw new UnauthorizedException(
+                'User not found.',
+            );
+
+        }
+
+        if (user.isDeleted) {
+
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+
+        }
+
+        if (!user.isActive) {
+
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+
+        }
+
+        if (
+            user.role !==
+            UserRole.SALON_OWNER
+        ) {
+
+            throw new UnauthorizedException(
+                'Only salon owners can create services.',
+            );
+
+        }
+
+        // ==========================================
+        // CHECK SALON ID
+        // ==========================================
+
+        if (!user.salonId) {
+
+            throw new BadRequestException(
+                'Please complete salon onboarding first.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND SALON
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                _id:
+                    user.salonId,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
+
             throw new BadRequestException(
                 'Salon not found.',
             );
+
         }
+
+        if (!salon.isActive) {
+
+            throw new BadRequestException(
+                'Salon is inactive.',
+            );
+
+        }
+
+        if (!salon.isSubscriptionActive) {
+
+            throw new BadRequestException(
+                'Please activate your subscription plan first.',
+            );
+
+        }
+
 
         const service =
             await this.serviceModel.findOne({
@@ -222,16 +554,101 @@ export class ServicesService {
         dto: UpdateServiceDto,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        // ==========================================
+        // FIND USER
+        // ==========================================
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+
+            throw new UnauthorizedException(
+                'User not found.',
+            );
+
+        }
+
+        if (user.isDeleted) {
+
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+
+        }
+
+        if (!user.isActive) {
+
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+
+        }
+
+        if (
+            user.role !==
+            UserRole.SALON_OWNER
+        ) {
+
+            throw new UnauthorizedException(
+                'Only salon owners can create services.',
+            );
+
+        }
+
+        // ==========================================
+        // CHECK SALON ID
+        // ==========================================
+
+        if (!user.salonId) {
+
+            throw new BadRequestException(
+                'Please complete salon onboarding first.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND SALON
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                _id:
+                    user.salonId,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
+
             throw new BadRequestException(
                 'Salon not found.',
             );
+
         }
+
+        if (!salon.isActive) {
+
+            throw new BadRequestException(
+                'Salon is inactive.',
+            );
+
+        }
+
+        if (!salon.isSubscriptionActive) {
+
+            throw new BadRequestException(
+                'Please activate your subscription plan first.',
+            );
+
+        }
+
 
         const service = await this.serviceModel.findOne({
             _id: id,
@@ -292,16 +709,101 @@ export class ServicesService {
         id: string,
     ) {
 
-        const salon = await this.salonModel.findOne({
-            ownerId: userId,
-            isDeleted: false,
-        });
+        // ==========================================
+        // FIND USER
+        // ==========================================
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+
+            throw new UnauthorizedException(
+                'User not found.',
+            );
+
+        }
+
+        if (user.isDeleted) {
+
+            throw new BadRequestException(
+                'User account has been deleted.',
+            );
+
+        }
+
+        if (!user.isActive) {
+
+            throw new BadRequestException(
+                'User account is inactive.',
+            );
+
+        }
+
+        if (
+            user.role !==
+            UserRole.SALON_OWNER
+        ) {
+
+            throw new UnauthorizedException(
+                'Only salon owners can create services.',
+            );
+
+        }
+
+        // ==========================================
+        // CHECK SALON ID
+        // ==========================================
+
+        if (!user.salonId) {
+
+            throw new BadRequestException(
+                'Please complete salon onboarding first.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND SALON
+        // ==========================================
+
+        const salon =
+            await this.salonModel.findOne({
+
+                _id:
+                    user.salonId,
+
+                isDeleted:
+                    false,
+
+            });
 
         if (!salon) {
+
             throw new BadRequestException(
                 'Salon not found.',
             );
+
         }
+
+        if (!salon.isActive) {
+
+            throw new BadRequestException(
+                'Salon is inactive.',
+            );
+
+        }
+
+        if (!salon.isSubscriptionActive) {
+
+            throw new BadRequestException(
+                'Please activate your subscription plan first.',
+            );
+
+        }
+
 
         const service = await this.serviceModel.findOne({
             _id: id,
