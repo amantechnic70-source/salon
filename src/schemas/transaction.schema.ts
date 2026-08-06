@@ -13,6 +13,25 @@ export class Transaction {
     })
     paymentId: Types.ObjectId;
 
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Appointment',
+        default: null,
+    })
+    appointmentId: Types.ObjectId | null;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'User'
+    })
+    userId: Types.ObjectId;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Salon'
+    })
+    salonId: Types.ObjectId;
+
     @Prop()
     transactionId: string;
 

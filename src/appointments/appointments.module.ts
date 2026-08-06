@@ -43,6 +43,9 @@ import {
 
 import { AppointmentsController } from './appointments.controller';
 import { AppointmentsService } from './appointments.service';
+import { User, UserSchema } from 'src/schemas/user.schema';
+import { CustomerBookingService } from './customer-booking.service';
+import { CustomerBookingController } from './customer-booking.controller';
 
 @Module({
 
@@ -90,16 +93,23 @@ import { AppointmentsService } from './appointments.service';
                 schema: CouponSchema,
             },
 
+            {
+                name: User.name,
+                schema: UserSchema,
+            },
+
         ]),
 
     ],
 
     controllers: [
         AppointmentsController,
+        CustomerBookingController,
     ],
 
     providers: [
         AppointmentsService,
+        CustomerBookingService,
     ],
 
     exports: [
@@ -107,4 +117,4 @@ import { AppointmentsService } from './appointments.service';
     ],
 
 })
-export class AppointmentsModule {}
+export class AppointmentsModule { }

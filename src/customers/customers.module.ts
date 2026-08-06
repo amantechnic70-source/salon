@@ -13,6 +13,7 @@ import {
 
 import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
   imports: [
@@ -24,6 +25,10 @@ import { CustomersService } from './customers.service';
       {
         name: Salon.name,
         schema: SalonSchema,
+      },
+      {
+        name: User.name,
+        schema: UserSchema,
       },
     ]),
   ],

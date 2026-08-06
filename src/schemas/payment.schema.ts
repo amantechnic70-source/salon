@@ -27,6 +27,55 @@ export class Payment {
     paymentId: string;
 
 
+    @Prop({
+        type: String,
+        enum: [
+            'SUBSCRIPTION',
+            'APPOINTMENT',
+        ],
+        required: true,
+    })
+    paymentType: string;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Appointment',
+        default: null,
+    })
+    appointmentId: Types.ObjectId | null;
+
+    @Prop({
+        type: {
+            salonId: Types.ObjectId,
+            branchId: Types.ObjectId,
+            customerId: Types.ObjectId,
+            staffId: Types.ObjectId,
+            serviceIds: [Types.ObjectId],
+            appointmentDate: Date,
+            appointmentTime: String,
+            notes: String,
+            totalAmount: Number,
+            discountAmount: Number,
+            finalAmount: Number,
+        },
+        default: null,
+    })
+    bookingData: {
+        couponId: any;
+        membershipId: any;
+        salonId: Types.ObjectId;
+        branchId: Types.ObjectId;
+        customerId: Types.ObjectId;
+        staffId: Types.ObjectId;
+        serviceIds: Types.ObjectId[];
+        appointmentDate: Date;
+        appointmentTime: string;
+        notes: string;
+        totalAmount: number;
+        discountAmount: number;
+        finalAmount: number;
+    };
+
     // Payment belongs to user initially,
     // because salon doesn't exist yet.
 
@@ -53,11 +102,10 @@ export class Payment {
     @Prop({
         type: Types.ObjectId,
         ref: 'SubscriptionPlan',
-        required: true,
+        default: null,
         index: true,
     })
-    planId: Types.ObjectId;
-
+    planId: Types.ObjectId | null;
 
     @Prop({
         type: Number,

@@ -30,6 +30,13 @@ import {
   SalonSchema,
 } from '../schemas/salon.schema';
 import { User, UserSchema } from 'src/schemas/user.schema';
+import { AppointmentPaymentService } from './appointment-payment.service';
+import { AppointmentPaymentController } from './appointment-payment.controller';
+import { Appointment, AppointmentSchema } from 'src/schemas/appointment.schema';
+import { Customer, CustomerSchema } from 'src/schemas/customer.schema';
+import { Branch, BranchSchema } from 'src/schemas/branch.schema';
+import { Staff, StaffSchema } from 'src/schemas/staff.schema';
+import { Service, ServiceSchema } from 'src/schemas/service.schema';
 
 @Module({
   imports: [
@@ -61,12 +68,35 @@ import { User, UserSchema } from 'src/schemas/user.schema';
       },
 
       {
-        name:
-          User.name,
-
-        schema:
-          UserSchema,
+        name: User.name,
+        schema: UserSchema,
       },
+
+      {
+        name: Appointment.name,
+        schema: AppointmentSchema,
+      },
+
+      {
+        name: Customer.name,
+        schema: CustomerSchema,
+      },
+
+      {
+        name: Branch.name,
+        schema: BranchSchema,
+      },
+
+      {
+        name: Staff.name,
+        schema: StaffSchema,
+      },
+
+      {
+        name: Service.name,
+        schema: ServiceSchema,
+      },
+
 
 
     ]),
@@ -74,11 +104,13 @@ import { User, UserSchema } from 'src/schemas/user.schema';
 
   controllers: [
     PaymentsController,
+    AppointmentPaymentController,
   ],
 
   providers: [
     PaymentsService,
     RazorpayService,
+    AppointmentPaymentService,
   ],
 
   exports: [

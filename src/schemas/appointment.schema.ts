@@ -8,6 +8,37 @@ export type AppointmentDocument =
 export class Appointment {
 
     @Prop({
+        type: Types.ObjectId,
+        ref: 'Payment',
+        default: null,
+    })
+    paymentId: Types.ObjectId;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Transaction',
+        default: null,
+    })
+    transactionId: Types.ObjectId | null;
+
+    @Prop({
+        enum: [
+            'SALON',
+            'CUSTOMER',
+        ],
+        default: 'CUSTOMER',
+    })
+    bookingSource: string;
+
+    @Prop({
+        enum: [
+            'ONLINE',
+            'OFFLINE',
+        ],
+    })
+    paymentMethod: string;
+
+    @Prop({
         required: true,
         unique: true,
     })
@@ -53,13 +84,24 @@ export class Appointment {
         type: Types.ObjectId,
         ref: 'Membership',
     })
-    membershipId: Types.ObjectId;
+    membershipId: Types.ObjectId | null;
 
     @Prop({
         type: Types.ObjectId,
         ref: 'Coupon',
     })
-    couponId: Types.ObjectId;
+    couponId: Types.ObjectId | null;
+
+    @Prop({
+        type: String,
+        enum: [
+            'CUSTOMER',
+            'SALON',
+            'ADMIN',
+        ],
+        default: null,
+    })
+    cancelledBy: string | null;
 
     @Prop({
         required: true,
@@ -70,6 +112,16 @@ export class Appointment {
         required: true,
     })
     appointmentTime: string;
+
+    @Prop({
+        default: null,
+    })
+    bookedAt: Date;
+
+    @Prop({
+        default: null,
+    })
+    paidAt: Date;
 
     @Prop({
         default: 0,
@@ -99,6 +151,12 @@ export class Appointment {
     @Prop()
     notes: string;
 
+    @Prop({
+        type: String,
+        default: null,
+    })
+    cancelReason: string | null;
+    
     @Prop({
         default: false,
     })
