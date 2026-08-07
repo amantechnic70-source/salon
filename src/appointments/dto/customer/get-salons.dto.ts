@@ -33,4 +33,7 @@ export class GetSalonsDto {
     @IsString()
     state?: string;
 
+    @IsOptional()
+    category?: string;
+
 }

@@ -67,29 +67,18 @@ export class CustomerBookingService {
         const limit =
             Number(query.limit) || 10;
 
+        const skip =
+            (page - 1) * limit;
+
         const filter: any = {
 
             isDeleted: false,
 
             isActive: true,
 
-            isVerified: true,
-
             isSubscriptionActive: true,
 
         };
-
-        if (query.search) {
-
-            filter.name = {
-
-                $regex: query.search,
-
-                $options: 'i',
-
-            };
-
-        }
 
         if (query.city) {
 
@@ -115,8 +104,56 @@ export class CustomerBookingService {
 
         }
 
-        const skip =
-            (page - 1) * limit;
+        // Search by salon name
+
+        if (query.search) {
+
+            filter.name = {
+
+                $regex: query.search,
+
+                $options: 'i',
+
+            };
+
+        }
+
+        // Search by service category
+
+        if (query.category) {
+
+            const salonIds =
+
+                await this.serviceModel.distinct(
+
+                    'salonId',
+
+                    {
+
+                        category: {
+
+                            $regex:
+                                query.category,
+
+                            $options: 'i',
+
+                        },
+
+                        isActive: true,
+
+                        isDeleted: false,
+
+                    },
+
+                );
+
+            filter._id = {
+
+                $in: salonIds,
+
+            };
+
+        }
 
         const total =
             await this.salonModel.countDocuments(
@@ -132,23 +169,128 @@ export class CustomerBookingService {
 
                 {
                     $lookup: {
-                        from: 'branches',
-                        localField: '_id',
-                        foreignField: 'salonId',
-                        as: 'branches',
+
+                        from:
+                            'branches',
+
+                        let: {
+
+                            salonId:
+                                '$_id',
+
+                        },
+
+                        pipeline: [
+
+                            {
+
+                                $match: {
+
+                                    $expr: {
+
+                                        $eq: [
+
+                                            '$salonId',
+
+                                            '$$salonId',
+
+                                        ],
+
+                                    },
+
+                                    isDeleted:
+                                        false,
+
+                                    isActive:
+                                        true,
+
+                                },
+
+                            },
+
+                        ],
+
+                        as:
+                            'branches',
+
                     },
+
                 },
 
                 {
                     $lookup: {
-                        from: 'services',
-                        localField: '_id',
-                        foreignField: 'salonId',
-                        as: 'services',
+
+                        from:
+                            'services',
+
+                        let: {
+
+                            salonId:
+                                '$_id',
+
+                        },
+
+                        pipeline: [
+
+                            {
+
+                                $match: {
+
+                                    $expr: {
+
+                                        $eq: [
+
+                                            '$salonId',
+
+                                            '$$salonId',
+
+                                        ],
+
+                                    },
+
+                                    isDeleted:
+                                        false,
+
+                                    isActive:
+                                        true,
+
+                                },
+
+                            },
+
+                        ],
+
+                        as:
+                            'services',
+
                     },
+
                 },
 
                 {
+
+                    $addFields: {
+
+                        totalBranches: {
+
+                            $size:
+                                '$branches',
+
+                        },
+
+                        totalServices: {
+
+                            $size:
+                                '$services',
+
+                        },
+
+                    },
+
+                },
+
+                {
+
                     $project: {
 
                         _id: 1,
@@ -181,29 +323,34 @@ export class CustomerBookingService {
 
                         longitude: 1,
 
-                        totalBranches: {
-                            $size: '$branches',
-                        },
+                        totalBranches: 1,
 
-                        totalServices: {
-                            $size: '$services',
-                        },
+                        totalServices: 1,
 
                     },
+
                 },
 
                 {
+
                     $sort: {
+
                         createdAt: -1,
+
                     },
+
                 },
 
                 {
+
                     $skip: skip,
+
                 },
 
                 {
+
                     $limit: limit,
+
                 },
 
             ]);
@@ -215,7 +362,8 @@ export class CustomerBookingService {
             message:
                 'Salons fetched successfully.',
 
-            data: salons,
+            data:
+                salons,
 
             pagination: {
 
@@ -244,13 +392,8 @@ export class CustomerBookingService {
             await this.salonModel.findOne({
 
                 _id: salonId,
-
                 isDeleted: false,
-
                 isActive: true,
-
-                isVerified: true,
-
                 isSubscriptionActive: true,
 
             });
@@ -347,13 +490,8 @@ export class CustomerBookingService {
             await this.salonModel.findOne({
 
                 _id: query.salonId,
-
                 isDeleted: false,
-
                 isActive: true,
-
-                isVerified: true,
-
                 isSubscriptionActive: true,
 
             });
@@ -367,28 +505,21 @@ export class CustomerBookingService {
         }
 
         const filter: any = {
-
             salonId: salon._id,
-
             isDeleted: false,
-
             isActive: true,
 
         };
 
         if (query.branchId) {
 
-            filter.branchId =
-                query.branchId;
+            filter.branchId = query.branchId;
 
         }
 
         if (query.category) {
-
             filter.category = {
-
                 $regex: query.category,
-
                 $options: 'i',
 
             };
@@ -399,9 +530,7 @@ export class CustomerBookingService {
             await this.serviceModel.find(filter)
 
                 .populate({
-
                     path: 'branchId',
-
                     select: `
                     branchId
                     name
@@ -412,9 +541,7 @@ export class CustomerBookingService {
                 })
 
                 .sort({
-
                     category: 1,
-
                     name: 1,
 
                 });
@@ -422,10 +549,7 @@ export class CustomerBookingService {
         return {
 
             success: true,
-
-            message:
-                'Salon services fetched successfully.',
-
+            message: 'Salon services fetched successfully.',
             data: services,
 
         };
@@ -492,9 +616,7 @@ export class CustomerBookingService {
             await this.branchModel.findOne({
 
                 _id: query.branchId,
-
                 isDeleted: false,
-
                 isActive: true,
 
             });
@@ -511,11 +633,8 @@ export class CustomerBookingService {
             await this.staffModel.findOne({
 
                 _id: query.staffId,
-
-                branchId: branch._id,
-
+                branchId: query.branchId,
                 isDeleted: false,
-
                 isActive: true,
 
             });
@@ -623,13 +742,8 @@ export class CustomerBookingService {
             await this.salonModel.findOne({
 
                 _id: dto.salonId,
-
                 isDeleted: false,
-
                 isActive: true,
-
-                isVerified: true,
-
                 isSubscriptionActive: true,
 
             });
@@ -663,13 +777,9 @@ export class CustomerBookingService {
             await this.staffModel.findOne({
 
                 _id: dto.staffId,
-
                 salonId: salon._id,
-
-                branchId: branch._id,
-
+                branchId: dto.branchId,
                 isDeleted: false,
-
                 isActive: true,
 
             });
@@ -688,11 +798,8 @@ export class CustomerBookingService {
                 },
 
                 salonId: salon._id,
-
-                branchId: branch._id,
-
+                branchId: dto.branchId,
                 isDeleted: false,
-
                 isActive: true,
 
             });
@@ -710,9 +817,7 @@ export class CustomerBookingService {
             await this.customerModel.findOne({
 
                 email: user.email,
-
                 isDeleted: false,
-
                 isActive: true,
 
             });
