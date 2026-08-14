@@ -14,6 +14,14 @@ export class Customer {
 
     @Prop({
         type: Types.ObjectId,
+        ref: 'User',
+        default: null,
+        index: true,
+    })
+    userId: Types.ObjectId | null;
+
+    @Prop({
+        type: Types.ObjectId,
         ref: 'Salon',
         required: true,
     })

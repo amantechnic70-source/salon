@@ -19,7 +19,6 @@ async function bootstrap() {
 
 
     // API PREFIX
-
     app.setGlobalPrefix(
         'api/v1',
     );
@@ -34,7 +33,6 @@ async function bootstrap() {
         credentials: true,
 
     });
-
 
     // COOKIE PARSER
 

@@ -5,7 +5,7 @@ import {
 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Branch, BranchDocument } from 'src/schemas/branch.schema';
 import { Salon, SalonDocument } from 'src/schemas/salon.schema';
 import { Service, ServiceDocument } from 'src/schemas/service.schema';
@@ -20,6 +20,8 @@ import { GetMyBookingsDto } from './dto/customer/get-my-bookings.dto';
 import { CancelBookingDto } from './dto/customer/cancel-booking.dto';
 import { RescheduleBookingDto } from './dto/customer/reschedule-booking.dto';
 import { GetSalonsDto } from './dto/customer/get-salons.dto';
+import { Membership, MembershipDocument } from 'src/schemas/membership.schema';
+import { Coupon, CouponDocument } from 'src/schemas/coupon.schema';
 
 @Injectable()
 
@@ -54,6 +56,14 @@ export class CustomerBookingService {
         @InjectModel(User.name)
         private readonly userModel:
             Model<UserDocument>,
+
+        @InjectModel(Membership.name)
+        private readonly membershipModel:
+            Model<MembershipDocument>,
+
+        @InjectModel(Coupon.name)
+        private readonly couponModel:
+            Model<CouponDocument>,
 
     ) { }
 
@@ -814,13 +824,10 @@ export class CustomerBookingService {
         }
 
         const customer =
-            await this.customerModel.findOne({
-
-                email: user.email,
-                isDeleted: false,
-                isActive: true,
-
-            });
+            await this.resolveCustomer(
+                userId,
+                salon._id,
+            );
 
         if (!customer) {
             throw new BadRequestException(
@@ -868,32 +875,191 @@ export class CustomerBookingService {
                 totalAppointments + 1,
             ).padStart(6, '0')}`;
 
+        let discountAmount = 0;
+
+        let membershipId:
+            Types.ObjectId | null = null;
+
+        let couponId:
+            Types.ObjectId | null = null;
+
+        if (dto.membershipId) {
+
+            const membership =
+                await this.membershipModel.findOne({
+
+                    _id:
+                        dto.membershipId,
+
+                    customerId:
+                        customer._id,
+
+                    isActive:
+                        true,
+
+                }).populate(
+                    'membershipPlanId',
+                );
+
+            if (!membership) {
+
+                throw new BadRequestException(
+                    'Invalid membership.',
+                );
+
+            }
+
+            const membershipPlan: any =
+                membership.membershipPlanId;
+
+            if (!membershipPlan) {
+
+                throw new BadRequestException(
+                    'Membership plan not found.',
+                );
+
+            }
+
+            const membershipDiscount =
+                (
+                    totalAmount *
+                    membershipPlan.discountPercentage
+                ) / 100;
+
+            discountAmount +=
+                membershipDiscount;
+
+            membershipId =
+                membership._id;
+        }
+
+        if (dto.couponId) {
+
+            const coupon =
+                await this.couponModel.findOne({
+
+                    _id:
+                        dto.couponId,
+
+                    isDeleted:
+                        false,
+
+                    isActive:
+                        true,
+
+                });
+
+            if (!coupon) {
+
+                throw new BadRequestException(
+                    'Invalid coupon.',
+                );
+
+            }
+
+            if (
+                new Date(
+                    coupon.expiryDate,
+                ) < new Date()
+            ) {
+
+                throw new BadRequestException(
+                    'Coupon has expired.',
+                );
+
+            }
+
+            let couponDiscount = 0;
+
+            if (
+                coupon.discountType ===
+                'FLAT'
+            ) {
+
+                couponDiscount =
+                    coupon.discountValue;
+
+            }
+
+            if (
+                coupon.discountType ===
+                'PERCENTAGE'
+            ) {
+
+                couponDiscount =
+                    (
+                        totalAmount *
+                        coupon.discountValue
+                    ) / 100;
+
+                if (
+                    couponDiscount >
+                    coupon.maximumDiscount
+                ) {
+
+                    couponDiscount =
+                        coupon.maximumDiscount;
+
+                }
+
+            }
+
+            discountAmount +=
+                couponDiscount;
+
+            couponId =
+                coupon._id;
+        }
+
+        if (
+            discountAmount >
+            totalAmount
+        ) {
+
+            discountAmount =
+                totalAmount;
+
+        }
+
+        const finalAmount =
+            totalAmount -
+            discountAmount;
+
         const appointment =
             await this.appointmentModel.create({
+
                 appointmentId,
+                userId: user._id,
+                customerId: customer._id,
+                customerName: customer.name,
+                customerEmail: customer.email || null,
+                customerPhone: customer.phone,
+                customerGender: customer.gender || null,
+                customerDateOfBirth: customer.dateOfBirth || null,
+                customerAddress: customer.address || null,
                 salonId: salon._id,
                 branchId: branch._id,
-                customerId: customer._id,
                 staffId: staff._id,
-                serviceIds: services.map(
-                    item => item._id,
-                ),
-                appointmentDate: new Date(dto.appointmentDate),
+                serviceIds: services.map(item => item._id,),
+                membershipId: membershipId || null,
+                couponId: couponId || null,
+                bookingSource: 'CUSTOMER',
+                paymentMethod: 'OFFLINE',
+                appointmentDate: new Date(dto.appointmentDate,),
                 appointmentTime: dto.appointmentTime,
+                bookedAt: new Date(),
+                paidAt: null,
                 totalAmount,
-                discountAmount: 0,
-
-                finalAmount:
-                    totalAmount,
-
-                paymentStatus:
-                    'PENDING',
-
-                appointmentStatus:
-                    'PENDING',
-
-                notes:
-                    dto.notes,
+                discountAmount,
+                finalAmount,
+                paymentStatus: 'PENDING',
+                appointmentStatus: 'CONFIRMED',
+                notes: dto.notes || null,
+                cancelReason: null,
+                cancelledBy: null,
+                isCompleted: false,
+                isCancelled: false,
+                isDeleted: false,
 
             });
 
@@ -1300,6 +1466,171 @@ export class CustomerBookingService {
 
         };
 
+    }
+
+    private async resolveCustomer(
+        userId: string,
+        salonId: Types.ObjectId,
+    ) {
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+
+            throw new BadRequestException(
+                'User not found.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND CUSTOMER ALREADY LINKED TO SALON
+        // ==========================================
+
+        let customer =
+            await this.customerModel.findOne({
+
+                userId:
+                    user._id,
+
+                salonId,
+
+                isDeleted:
+                    false,
+
+                isActive:
+                    true,
+
+            });
+
+        if (customer) {
+
+            return customer;
+
+        }
+
+        // ==========================================
+        // FIND CUSTOMER CREATED BY SALON OWNER
+        // ==========================================
+
+        customer =
+            await this.customerModel.findOne({
+
+                salonId,
+
+                userId:
+                    null,
+
+                isDeleted:
+                    false,
+
+                isActive:
+                    true,
+
+                $or: [
+
+                    {
+                        email:
+                            user.email,
+                    },
+
+                    {
+                        phone:
+                            user.phone,
+                    },
+
+                ],
+
+            });
+
+        if (customer) {
+
+            customer.userId =
+                user._id;
+
+            customer.name =
+                user.name;
+
+            customer.email =
+                user.email;
+
+            customer.phone =
+                user.phone;
+
+            customer.isActive =
+                true;
+
+            await customer.save();
+
+            return customer;
+
+        }
+
+        // ==========================================
+        // CREATE NEW SALON CUSTOMER
+        // ==========================================
+
+        const totalCustomers =
+            await this.customerModel
+                .countDocuments();
+
+        const customerId =
+            `CUS${String(
+                totalCustomers + 1,
+            ).padStart(6, '0')}`;
+
+        customer =
+            await this.customerModel.create({
+
+                customerId,
+
+                userId:
+                    user._id,
+
+                salonId,
+
+                name:
+                    user.name,
+
+                email:
+                    user.email,
+
+                phone:
+                    user.phone,
+
+                gender:
+                    (user as any).gender ||
+                    null,
+
+                dateOfBirth:
+                    (user as any).dateOfBirth ||
+                    null,
+
+                address:
+                    (user as any).address ||
+                    null,
+
+                loyaltyPoints:
+                    0,
+
+                totalVisits:
+                    0,
+
+                totalSpent:
+                    0,
+
+                isActive:
+                    true,
+
+                isDeleted:
+                    false,
+
+            });
+
+        return customer;
     }
 
 }

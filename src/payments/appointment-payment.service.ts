@@ -6,7 +6,7 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 
 import { InjectModel } from '@nestjs/mongoose';
 
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { ConfigService } from '@nestjs/config';
 
@@ -170,59 +170,36 @@ export class AppointmentPaymentService {
         }
 
         // ==========================================
-        // FIND CUSTOMER
-        // ==========================================
-
-        const customer =
-            await this.customerModel.findOne({
-
-                userId:
-                    user._id,
-
-                isDeleted:
-                    false,
-
-                isActive:
-                    true,
-
-            });
-
-        if (!customer) {
-
-            throw new BadRequestException(
-                'Customer profile not found.',
-            );
-
-        }
-
-        // ==========================================
         // FIND SALON
         // ==========================================
 
         const salon =
             await this.salonModel.findOne({
-
-                _id:
-                    dto.salonId,
-
-                isDeleted:
-                    false,
-
-                isActive:
-                    true,
-
-                isVerified:
-                    true,
-
-                isSubscriptionActive:
-                    true,
-
+                _id: dto.salonId,
+                isDeleted: false,
+                isActive: true,
+                isSubscriptionActive: true,
             });
 
         if (!salon) {
-
             throw new BadRequestException(
                 'Salon not found.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND CUSTOMER
+        // ==========================================
+
+        const customer = await this.resolveCustomer(
+            userId,
+            salon._id,
+        );
+
+        if (!customer) {
+            throw new BadRequestException(
+                'Customer profile not found.',
             );
 
         }
@@ -471,6 +448,9 @@ export class AppointmentPaymentService {
 
                 bookingData: {
 
+                    userId:
+                        user._id,
+
                     salonId:
                         salon._id,
 
@@ -484,7 +464,15 @@ export class AppointmentPaymentService {
                         staff._id,
 
                     serviceIds:
-                        dto.serviceIds,
+                        services.map(
+                            item => item._id,
+                        ),
+
+                    // membershipId:
+                    //     membershipId,
+
+                    // couponId:
+                    //     couponId,
 
                     appointmentDate:
                         dto.appointmentDate,
@@ -492,14 +480,32 @@ export class AppointmentPaymentService {
                     appointmentTime:
                         dto.appointmentTime,
 
-                    notes:
-                        dto.notes,
+                    customerName:
+                        customer.name,
+
+                    customerEmail:
+                        customer.email || null,
+
+                    customerPhone:
+                        customer.phone,
+
+                    customerGender:
+                        customer.gender || null,
+
+                    customerDateOfBirth:
+                        customer.dateOfBirth || null,
+
+                    customerAddress:
+                        customer.address || null,
 
                     totalAmount,
 
                     discountAmount,
 
                     finalAmount,
+
+                    notes:
+                        dto.notes || null,
 
                 },
 
@@ -614,10 +620,8 @@ export class AppointmentPaymentService {
         // ==========================================
 
         if (
-
             payment.userId.toString() !==
             user._id.toString()
-
         ) {
 
             throw new UnauthorizedException(
@@ -627,33 +631,58 @@ export class AppointmentPaymentService {
         }
 
         // ==========================================
-        // VERIFY SIGNATURE
+        // READ BOOKING DATA
+        // ==========================================
+
+        const booking =
+            payment.bookingData;
+
+        if (!booking) {
+
+            throw new BadRequestException(
+                'Booking data not found.',
+            );
+
+        }
+
+        // ==========================================
+        // VERIFY ORDER ID
+        // ==========================================
+
+        if (
+            payment.orderId !==
+            dto.razorpay_order_id
+        ) {
+
+            throw new BadRequestException(
+                'Invalid Razorpay order.',
+            );
+
+        }
+
+        // ==========================================
+        // VERIFY RAZORPAY SIGNATURE
         // ==========================================
 
         const body =
             dto.razorpay_order_id +
-            "|" +
+            '|' +
             dto.razorpay_payment_id;
 
         const expectedSignature =
             crypto
                 .createHmac(
-
                     'sha256',
-
                     this.configService.get<string>(
                         'RAZORPAY_KEY_SECRET',
                     )!,
-
                 )
                 .update(body)
                 .digest('hex');
 
         if (
-
             expectedSignature !==
             dto.razorpay_signature
-
         ) {
 
             payment.paymentStatus =
@@ -669,6 +698,7 @@ export class AppointmentPaymentService {
             );
 
         }
+
         // ==========================================
         // UPDATE PAYMENT SUCCESS
         // ==========================================
@@ -691,26 +721,12 @@ export class AppointmentPaymentService {
         await payment.save();
 
         // ==========================================
-        // READ BOOKING DATA
-        // ==========================================
-
-        const booking =
-            payment.bookingData;
-
-        if (!booking) {
-
-            throw new BadRequestException(
-                'Booking data not found.',
-            );
-
-        }
-
-        // ==========================================
         // GENERATE APPOINTMENT ID
         // ==========================================
 
         const totalAppointments =
-            await this.appointmentModel.countDocuments();
+            await this.appointmentModel
+                .countDocuments();
 
         const appointmentId =
             `APT${String(
@@ -745,6 +761,10 @@ export class AppointmentPaymentService {
                 transactionId:
                     null,
 
+                userId:
+                    booking.userId ||
+                    user._id,
+
                 bookingSource:
                     'CUSTOMER',
 
@@ -762,6 +782,30 @@ export class AppointmentPaymentService {
                 customerId:
                     booking.customerId,
 
+                customerName:
+                    booking.customerName ||
+                    user.name,
+
+                customerEmail:
+                    booking.customerEmail ||
+                    null,
+
+                customerPhone:
+                    booking.customerPhone ||
+                    user.phone,
+
+                customerGender:
+                    booking.customerGender ||
+                    null,
+
+                customerDateOfBirth:
+                    booking.customerDateOfBirth ||
+                    null,
+
+                customerAddress:
+                    booking.customerAddress ||
+                    null,
+
                 staffId:
                     booking.staffId,
 
@@ -776,8 +820,7 @@ export class AppointmentPaymentService {
                     booking.couponId ||
                     null,
 
-                appointmentDate:
-                    appointmentDate,
+                appointmentDate,
 
                 appointmentTime:
                     booking.appointmentTime,
@@ -798,7 +841,8 @@ export class AppointmentPaymentService {
                     'CONFIRMED',
 
                 notes:
-                    booking.notes,
+                    booking.notes ||
+                    null,
 
                 bookedAt,
 
@@ -826,7 +870,8 @@ export class AppointmentPaymentService {
         // ==========================================
 
         const totalTransactions =
-            await this.transactionModel.countDocuments();
+            await this.transactionModel
+                .countDocuments();
 
         const transactionId =
             `TRN${String(
@@ -852,17 +897,25 @@ export class AppointmentPaymentService {
                 salonId:
                     booking.salonId,
 
-                transactionId:
-                    transactionId,
+                transactionId,
 
                 amount:
                     payment.amount,
+
+                currency:
+                    payment.currency,
 
                 provider:
                     payment.provider,
 
                 providerTransactionId:
                     dto.razorpay_payment_id,
+
+                transactionType:
+                    'APPOINTMENT',
+
+                paymentMethod:
+                    'ONLINE',
 
                 status:
                     'SUCCESS',
@@ -906,7 +959,7 @@ export class AppointmentPaymentService {
                 )
                 .populate(
                     'customerId',
-                    'name phone',
+                    'name phone email gender dateOfBirth address',
                 )
                 .populate(
                     'staffId',
@@ -1255,6 +1308,171 @@ export class AppointmentPaymentService {
 
         };
 
+    }
+
+    private async resolveCustomer(
+        userId: string,
+        salonId: Types.ObjectId,
+    ) {
+
+        const user =
+            await this.userModel.findById(
+                userId,
+            );
+
+        if (!user) {
+
+            throw new BadRequestException(
+                'User not found.',
+            );
+
+        }
+
+        // ==========================================
+        // FIND CUSTOMER ALREADY LINKED TO SALON
+        // ==========================================
+
+        let customer =
+            await this.customerModel.findOne({
+
+                userId:
+                    user._id,
+
+                salonId,
+
+                isDeleted:
+                    false,
+
+                isActive:
+                    true,
+
+            });
+
+        if (customer) {
+
+            return customer;
+
+        }
+
+        // ==========================================
+        // FIND CUSTOMER CREATED BY SALON OWNER
+        // ==========================================
+
+        customer =
+            await this.customerModel.findOne({
+
+                salonId,
+
+                userId:
+                    null,
+
+                isDeleted:
+                    false,
+
+                isActive:
+                    true,
+
+                $or: [
+
+                    {
+                        email:
+                            user.email,
+                    },
+
+                    {
+                        phone:
+                            user.phone,
+                    },
+
+                ],
+
+            });
+
+        if (customer) {
+
+            customer.userId =
+                user._id;
+
+            customer.name =
+                user.name;
+
+            customer.email =
+                user.email;
+
+            customer.phone =
+                user.phone;
+
+            customer.isActive =
+                true;
+
+            await customer.save();
+
+            return customer;
+
+        }
+
+        // ==========================================
+        // CREATE NEW SALON CUSTOMER
+        // ==========================================
+
+        const totalCustomers =
+            await this.customerModel
+                .countDocuments();
+
+        const customerId =
+            `CUS${String(
+                totalCustomers + 1,
+            ).padStart(6, '0')}`;
+
+        customer =
+            await this.customerModel.create({
+
+                customerId,
+
+                userId:
+                    user._id,
+
+                salonId,
+
+                name:
+                    user.name,
+
+                email:
+                    user.email,
+
+                phone:
+                    user.phone,
+
+                gender:
+                    (user as any).gender ||
+                    null,
+
+                dateOfBirth:
+                    (user as any).dateOfBirth ||
+                    null,
+
+                address:
+                    (user as any).address ||
+                    null,
+
+                loyaltyPoints:
+                    0,
+
+                totalVisits:
+                    0,
+
+                totalSpent:
+                    0,
+
+                isActive:
+                    true,
+
+                isDeleted:
+                    false,
+
+            });
+
+        return customer;
     }
 
 

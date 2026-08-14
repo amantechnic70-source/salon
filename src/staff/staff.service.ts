@@ -233,7 +233,7 @@ export class StaffService {
             userId: userIdGenerat,
             staffId,
             salonId: salon._id,
-            branchId: dto.branchId,
+            branchId: branch._id,
             name: dto.name,
             email: dto.email,
             phone: dto.phone,

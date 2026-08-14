@@ -38,4 +38,12 @@ export class CreateBookingDto {
     @IsString()
     paymentMethod: string;
 
+    @IsOptional()
+    @IsMongoId()
+    membershipId?: string;
+
+    @IsOptional()
+    @IsMongoId()
+    couponId?: string;
+
 }

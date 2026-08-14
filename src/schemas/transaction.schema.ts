@@ -10,6 +10,8 @@ export class Transaction {
     @Prop({
         type: Types.ObjectId,
         ref: 'Payment',
+        required: true,
+        index: true,
     })
     paymentId: Types.ObjectId;
 
@@ -17,36 +19,100 @@ export class Transaction {
         type: Types.ObjectId,
         ref: 'Appointment',
         default: null,
+        index: true,
     })
     appointmentId: Types.ObjectId | null;
 
     @Prop({
         type: Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true,
+        index: true,
     })
     userId: Types.ObjectId;
 
     @Prop({
         type: Types.ObjectId,
-        ref: 'Salon'
+        ref: 'Salon',
+        default: null,
+        index: true,
     })
-    salonId: Types.ObjectId;
+    salonId: Types.ObjectId | null;
 
-    @Prop()
+    @Prop({
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+    })
     transactionId: string;
 
-    @Prop()
+    @Prop({
+        type: Number,
+        required: true,
+        min: 0,
+    })
     amount: number;
 
-    @Prop()
+    @Prop({
+        type: String,
+        required: true,
+        default: 'INR',
+        uppercase: true,
+        trim: true,
+    })
+    currency: string;
+
+    @Prop({
+        type: String,
+        required: true,
+        default: 'RAZORPAY',
+        uppercase: true,
+        trim: true,
+    })
     provider: string;
 
-    @Prop()
-    providerTransactionId: string;
+    @Prop({
+        type: String,
+        default: null,
+        index: true,
+    })
+    providerTransactionId: string | null;
 
-    @Prop()
+    @Prop({
+        type: String,
+        enum: [
+            'SUBSCRIPTION',
+            'APPOINTMENT',
+        ],
+        required: true,
+        index: true,
+    })
+    transactionType: string;
+
+    @Prop({
+        type: String,
+        enum: [
+            'ONLINE',
+            'OFFLINE',
+        ],
+        default: null,
+    })
+    paymentMethod: string | null;
+
+    @Prop({
+        type: String,
+        enum: [
+            'PENDING',
+            'SUCCESS',
+            'FAILED',
+            'REFUNDED',
+        ],
+        required: true,
+        default: 'PENDING',
+        index: true,
+    })
     status: string;
-
 }
 
 export const TransactionSchema =

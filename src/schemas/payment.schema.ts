@@ -13,6 +13,152 @@ export type PaymentDocument =
     HydratedDocument<Payment>;
 
 @Schema({
+    _id: false,
+})
+export class BookingData {
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'User',
+        default: null,
+    })
+    userId: Types.ObjectId | null;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Salon',
+        required: true,
+    })
+    salonId: Types.ObjectId;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Branch',
+        required: true,
+    })
+    branchId: Types.ObjectId;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Customer',
+        required: true,
+    })
+    customerId: Types.ObjectId;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Staff',
+        required: true,
+    })
+    staffId: Types.ObjectId;
+
+    @Prop({
+        type: [
+            {
+                type: Types.ObjectId,
+                ref: 'Service',
+            },
+        ],
+        required: true,
+    })
+    serviceIds: Types.ObjectId[];
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Membership',
+        default: null,
+    })
+    membershipId: Types.ObjectId | null;
+
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'Coupon',
+        default: null,
+    })
+    couponId: Types.ObjectId | null;
+
+    @Prop({
+        type: Date,
+        required: true,
+    })
+    appointmentDate: Date;
+
+    @Prop({
+        type: String,
+        required: true,
+    })
+    appointmentTime: string;
+
+    @Prop({
+        type: String,
+        default: null,
+    })
+    customerName: string | null;
+
+    @Prop({
+        type: String,
+        default: null,
+    })
+    customerEmail: string | null;
+
+    @Prop({
+        type: String,
+        default: null,
+    })
+    customerPhone: string | null;
+
+    @Prop({
+        type: String,
+        default: null,
+    })
+    customerGender: string | null;
+
+    @Prop({
+        type: Date,
+        default: null,
+    })
+    customerDateOfBirth: Date | null;
+
+    @Prop({
+        type: String,
+        default: null,
+    })
+    customerAddress: string | null;
+
+    @Prop({
+        type: String,
+        default: null,
+    })
+    notes: string | null;
+
+    @Prop({
+        type: Number,
+        required: true,
+        min: 0,
+    })
+    totalAmount: number;
+
+    @Prop({
+        type: Number,
+        default: 0,
+        min: 0,
+    })
+    discountAmount: number;
+
+    @Prop({
+        type: Number,
+        required: true,
+        min: 0,
+    })
+    finalAmount: number;
+}
+
+export const BookingDataSchema =
+    SchemaFactory.createForClass(
+        BookingData,
+    );
+
+@Schema({
     timestamps: true,
 })
 export class Payment {
@@ -25,7 +171,6 @@ export class Payment {
         trim: true,
     })
     paymentId: string;
-
 
     @Prop({
         type: String,
@@ -45,39 +190,10 @@ export class Payment {
     appointmentId: Types.ObjectId | null;
 
     @Prop({
-        type: {
-            salonId: Types.ObjectId,
-            branchId: Types.ObjectId,
-            customerId: Types.ObjectId,
-            staffId: Types.ObjectId,
-            serviceIds: [Types.ObjectId],
-            appointmentDate: Date,
-            appointmentTime: String,
-            notes: String,
-            totalAmount: Number,
-            discountAmount: Number,
-            finalAmount: Number,
-        },
+        type: BookingDataSchema,
         default: null,
     })
-    bookingData: {
-        couponId: any;
-        membershipId: any;
-        salonId: Types.ObjectId;
-        branchId: Types.ObjectId;
-        customerId: Types.ObjectId;
-        staffId: Types.ObjectId;
-        serviceIds: Types.ObjectId[];
-        appointmentDate: Date;
-        appointmentTime: string;
-        notes: string;
-        totalAmount: number;
-        discountAmount: number;
-        finalAmount: number;
-    };
-
-    // Payment belongs to user initially,
-    // because salon doesn't exist yet.
+    bookingData: BookingData | null;
 
     @Prop({
         type: Types.ObjectId,
@@ -87,9 +203,6 @@ export class Payment {
     })
     userId: Types.ObjectId;
 
-
-    // Salon will be null until onboarding completes.
-
     @Prop({
         type: Types.ObjectId,
         ref: 'Salon',
@@ -97,7 +210,6 @@ export class Payment {
         index: true,
     })
     salonId: Types.ObjectId | null;
-
 
     @Prop({
         type: Types.ObjectId,
@@ -114,7 +226,6 @@ export class Payment {
     })
     amount: number;
 
-
     @Prop({
         type: String,
         required: true,
@@ -123,7 +234,6 @@ export class Payment {
         trim: true,
     })
     currency: string;
-
 
     @Prop({
         type: String,
@@ -134,7 +244,6 @@ export class Payment {
     })
     provider: string;
 
-
     @Prop({
         type: String,
         required: true,
@@ -142,7 +251,6 @@ export class Payment {
         index: true,
     })
     orderId: string;
-
 
     @Prop({
         type: String,
@@ -158,13 +266,11 @@ export class Payment {
     })
     paymentStatus: string;
 
-
     @Prop({
         type: String,
         default: null,
     })
     paymentMethod: string | null;
-
 
     @Prop({
         type: String,
@@ -173,13 +279,11 @@ export class Payment {
     })
     razorpayPaymentId: string | null;
 
-
     @Prop({
         type: String,
         default: null,
     })
     razorpaySignature: string | null;
-
 
     @Prop({
         type: String,
@@ -187,20 +291,17 @@ export class Payment {
     })
     failureReason: string | null;
 
-
     @Prop({
         type: Boolean,
         default: false,
     })
     isRefunded: boolean;
 
-
     @Prop({
         type: Date,
         default: null,
     })
     refundedAt: Date | null;
-
 }
 
 export const PaymentSchema =
