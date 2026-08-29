@@ -6,7 +6,7 @@ import { UpdateReviewDto } from './dto/update-review.dto';
 import { UpdateReviewStatusDto } from './dto/update-review-status.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Review, ReviewDocument } from 'src/schemas/review.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Customer, CustomerDocument } from 'src/schemas/customer.schema';
 import { Appointment, AppointmentDocument } from 'src/schemas/appointment.schema';
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -41,6 +41,7 @@ export class ReviewsService {
                 isDeleted: false,
 
             });
+
 
         if (!customer) {
 
@@ -168,11 +169,16 @@ export class ReviewsService {
         const customer =
             await this.customerModel.findOne({
 
-                _id: userId,
+                userId:
+                    new Types.ObjectId(
+                        userId,
+                    ),
+
 
                 isDeleted: false,
 
             });
+
 
         if (!customer) {
 
