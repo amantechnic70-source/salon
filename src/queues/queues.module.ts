@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MailQueueModule } from './mail-queue/mail-queue.module';
 import { NotificationQueueModule } from './notification-queue/notification-queue.module';
 import { PaymentQueueModule } from './payment-queue/payment-queue.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -10,11 +10,19 @@ import { BullModule } from '@nestjs/bullmq';
 
     ConfigModule,
 
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || '172.17.204.67',
-        port: Number(process.env.REDIS_PORT) || 6379,
-      },
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get<string>('REDIS_HOST'),
+          port: Number(config.get<string>('REDIS_PORT')),
+          username: config.get<string>('REDIS_USERNAME'),
+          password: config.get<string>('REDIS_PASSWORD'),
+          db: Number(config.get<string>('REDIS_DB') || 0),
+        },
+      }),
     }),
 
     MailQueueModule,
