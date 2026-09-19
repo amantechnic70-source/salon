@@ -26,7 +26,8 @@ async function bootstrap() {
     // CORS
 
     app.enableCors({
-        origin: process.env.FRONTEND_URL,
+        // origin: process.env.FRONTEND_URL,
+        origin: 'https://salon-frontend-ashen.vercel.app',
         credentials: true,
     });
 
