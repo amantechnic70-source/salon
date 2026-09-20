@@ -105,7 +105,7 @@ export class AdminService {
 
         await this.mailService.sendMail({
             email: dto.email.toLowerCase(),
-            subject: 'Password Changed Successfully',
+            subject: 'Admin OTP Verify',
             html: `
         <h2>Welcome to Salon Marketplace</h2>
         <p>Your OTP is:</p>
