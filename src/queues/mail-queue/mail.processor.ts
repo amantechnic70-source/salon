@@ -62,14 +62,17 @@ export class MailProcessor extends WorkerHost {
                 break;
 
             case 'send-otp':
+                try {
+                    const result = await this.mailService.sendMail({
+                        email: job.data.email,
+                        subject: job.data.subject,
+                        html: job.data.html,
+                    });
 
-                await this.mailService.sendMail({
-
-                    email: job.data.email,
-                    subject: job.data.subject,
-                    html: job.data.html,
-
-                });
+                } catch (error) {
+                    console.error('❌ MAIL SERVICE ERROR:', error);
+                    throw error;
+                }
 
                 break;
 
