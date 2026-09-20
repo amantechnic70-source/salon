@@ -360,17 +360,17 @@ export class AuthService {
         </p>
     `;
 
-        // await this.mailQueueService.sendForgotPasswordEmail({
-        //     email: user.email,
-        //     subject: 'Reset Password',
-        //     html,
-        // });
-
-        await this.mailService.sendMail({
+        await this.mailQueueService.sendForgotPasswordEmail({
             email: user.email,
             subject: 'Reset Password',
             html,
         });
+
+        // await this.mailService.sendMail({
+        //     email: user.email,
+        //     subject: 'Reset Password',
+        //     html,
+        // });
 
         return {
             success: true,

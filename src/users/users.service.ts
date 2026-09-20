@@ -102,18 +102,18 @@ export class UsersService {
 
         // Send OTP email using Mail Queue
 
-        // await this.mailQueueService.sendOTPEmail({
-        //     email: dto.email,
-        //     subject: 'Verify Your Email',
-        //     html,
-
-        // });
-
-        await this.mailService.sendMail({
+        await this.mailQueueService.sendOTPEmail({
             email: dto.email,
             subject: 'Verify Your Email',
             html,
+
         });
+
+        // await this.mailService.sendMail({
+        //     email: dto.email,
+        //     subject: 'Verify Your Email',
+        //     html,
+        // });
 
 
         // Response
