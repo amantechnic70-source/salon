@@ -7,9 +7,10 @@ import { AuthService } from './auth.service';
 
 import { UsersModule } from '../users/users.module';
 import { RedisModule } from 'src/redis/redis.module';
-import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
+
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { StringValue } from "ms";
+import { StringValue } from 'ms';
+
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailModule } from 'src/mail/mail.module';
 
@@ -20,46 +21,33 @@ import { MailModule } from 'src/mail/mail.module';
     PassportModule,
 
     JwtModule.registerAsync({
+      imports: [ConfigModule],
 
-      imports: [
-        ConfigModule,
-      ],
+      inject: [ConfigService],
 
-      inject: [
-        ConfigService,
-      ],
-
-      useFactory: (
-        configService: ConfigService,
-      ) => ({
-
-        secret:
-          configService.get<string>(
-            "JWT_SECRET",
-          ),
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
 
         signOptions: {
-
           expiresIn: (
-            configService.get<string>(
-              "JWT_EXPIRES_IN",
-            ) || "1d"
+            configService.get<string>('JWT_EXPIRES_IN') || '1d'
           ) as StringValue,
-
         },
-
       }),
-
     }),
+
     RedisModule,
-    MailQueueModule,
-    MailModule
+
+    MailModule,
   ],
 
   controllers: [AuthController],
 
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+  ],
 
   exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

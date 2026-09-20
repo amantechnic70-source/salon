@@ -26,7 +26,6 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from 'src/redis/redis.service';
-import { MailQueueService } from 'src/queues/mail-queue/mail-queue.service';
 import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
@@ -36,7 +35,6 @@ export class AuthService {
         @InjectModel(User.name)
         private readonly userModel: Model<UserDocument>,
         private readonly redisService: RedisService,
-        private readonly mailQueueService: MailQueueService,
         private readonly jwtService: JwtService,
         private readonly mailService: MailService,
     ) { }
@@ -360,17 +358,17 @@ export class AuthService {
         </p>
     `;
 
-        await this.mailQueueService.sendForgotPasswordEmail({
-            email: user.email,
-            subject: 'Reset Password',
-            html,
-        });
-
-        // await this.mailService.sendMail({
+        // await this.mailQueueService.sendForgotPasswordEmail({
         //     email: user.email,
         //     subject: 'Reset Password',
         //     html,
         // });
+
+        await this.mailService.sendMail({
+            email: user.email,
+            subject: 'Reset Password',
+            html,
+        });
 
         return {
             success: true,
@@ -479,14 +477,20 @@ export class AuthService {
 
         // Send mail using queue
 
-        await this.mailQueueService.sendPasswordChangedEmail({
+        // await this.mailQueueService.sendPasswordChangedEmail({
 
+        //     email: user.email,
+
+        //     subject: 'Password Changed Successfully',
+
+        //     html,
+
+        // });
+
+        await this.mailService.sendMail({
             email: user.email,
-
             subject: 'Password Changed Successfully',
-
             html,
-
         });
 
 
@@ -616,14 +620,20 @@ export class AuthService {
 
         // Send confirmation email using queue
 
-        await this.mailQueueService.sendPasswordChangedEmail({
+        // await this.mailQueueService.sendPasswordChangedEmail({
 
+        //     email: user.email,
+
+        //     subject: 'Password Changed Successfully',
+
+        //     html,
+
+        // });
+
+        await this.mailService.sendMail({
             email: user.email,
-
             subject: 'Password Changed Successfully',
-
             html,
-
         });
 
 
