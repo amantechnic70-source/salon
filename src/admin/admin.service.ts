@@ -20,6 +20,7 @@ import { PlatformSetting, PlatformSettingDocument } from 'src/schemas/platform-s
 import { JwtService } from '@nestjs/jwt';
 import { generateUserId } from 'src/common/utils/generate-user-id';
 import * as bcrypt from 'bcrypt';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AdminService {
@@ -29,8 +30,8 @@ export class AdminService {
         private readonly redisService:
             RedisService,
 
-        private readonly mailQueueService:
-            MailQueueService,
+        // private readonly mailQueueService:
+        //     MailQueueService,
 
         @InjectModel(User.name)
         private readonly userModel:
@@ -58,6 +59,8 @@ export class AdminService {
 
         private readonly jwtService:
             JwtService,
+
+        private readonly mailService: MailService,
     ) { }
 
     async sendOtp(
@@ -89,9 +92,20 @@ export class AdminService {
             300,
         );
 
-        await this.mailQueueService.sendOTPEmailAdmin({
-            email: dto.email.toLowerCase(),   // was: to: dto.email
-            subject: 'Admin OTP Verification',
+    //     await this.mailQueueService.sendOTPEmailAdmin({
+    //         email: dto.email.toLowerCase(),   // was: to: dto.email
+    //         subject: 'Admin OTP Verification',
+    //         html: `
+    //     <h2>Welcome to Salon Marketplace</h2>
+    //     <p>Your OTP is:</p>
+    //     <h1>${otp}</h1>
+    //     <p>This OTP is valid for 5 minutes.</p>
+    // `,
+    //     });
+
+        await this.mailService.sendMail({
+            email: dto.email.toLowerCase(),
+            subject: 'Password Changed Successfully',
             html: `
         <h2>Welcome to Salon Marketplace</h2>
         <p>Your OTP is:</p>

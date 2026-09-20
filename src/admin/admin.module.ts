@@ -49,6 +49,7 @@ import { MailQueueService } from 'src/queues/mail-queue/mail-queue.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
 import { RedisModule } from 'src/redis/redis.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
 
@@ -105,6 +106,7 @@ import { RedisModule } from 'src/redis/redis.module';
 
         MailQueueModule,
         RedisModule,
+        MailModule,
         JwtModule.register({
             secret: process.env.JWT_SECRET,
             signOptions: {
