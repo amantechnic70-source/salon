@@ -380,6 +380,8 @@ export class PaymentsService {
                     amount:
                         planAmount,
 
+                    paymentType: "SUBSCRIPTION",
+
                     currency:
                         razorpayOrder.currency,
 
@@ -396,6 +398,9 @@ export class PaymentsService {
                         false,
 
                 });
+
+
+            console.log("payment", payment)
 
 
             // ======================================
@@ -450,15 +455,10 @@ export class PaymentsService {
 
         } catch (error) {
 
-            /*
-             * Razorpay order exists but DB payment
-             * record creation failed.
-             *
-             * Don't return the order to the frontend
-             * because your backend cannot safely
-             * verify it later without its payment
-             * record.
-             */
+            console.error(
+                "❌ PAYMENT DB CREATE ERROR:",
+                error instanceof Error ? error.message : error,
+            );
 
             throw new InternalServerErrorException(
                 "Payment order was created but could not be saved. Please try again.",
@@ -851,17 +851,24 @@ export class PaymentsService {
 
             await this.transactionModel.create({
 
-                paymentId:
-                    payment._id,
+                paymentId: payment._id,
 
-                transactionId:
+                userId: user._id,
+
+                salonId: user.salonId ?? null,
+
+                transactionType: "SUBSCRIPTION",
+
+                transactionId: dto.razorpay_payment_id,
+
+                amount: payment.amount,
+
+                provider: "RAZORPAY",
+
+                providerTransactionId:
                     dto.razorpay_payment_id,
 
-                amount:
-                    payment.amount,
-
-                status:
-                    PaymentStatus.SUCCESS,
+                status: PaymentStatus.SUCCESS,
 
             });
 
