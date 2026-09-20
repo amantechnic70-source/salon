@@ -399,10 +399,6 @@ export class PaymentsService {
 
                 });
 
-
-            console.log("payment", payment)
-
-
             // ======================================
             // 14. RESPONSE
             // ======================================
@@ -920,32 +916,39 @@ export class PaymentsService {
         // ==========================================
         // 15. EXISTING SALON CASE
         // ==========================================
-        // Useful later for renewal/upgrade.
-
         if (user.salonId) {
-
-            await this.salonModel.findByIdAndUpdate(
-
+            const salon = await this.salonModel.findByIdAndUpdate(
                 user.salonId,
-
                 {
                     $set: {
-                        isSubscriptionActive:
-                            true,
+                        isSubscriptionActive: true,
                     },
                 },
-
+                { new: true },
             );
 
-            if (!payment.salonId) {
-
-                payment.salonId =
-                    user.salonId;
-
+            if (salon && !payment.salonId) {
+                payment.salonId = salon._id;
                 await payment.save();
-
             }
+        } else {
+            const salon = await this.salonModel.findOneAndUpdate(
+                {
+                    ownerId: user._id,
+                    isDeleted: false,
+                },
+                {
+                    $set: {
+                        isSubscriptionActive: true,
+                    },
+                },
+                { new: true },
+            );
 
+            if (salon && !payment.salonId) {
+                payment.salonId = salon._id;
+                await payment.save();
+            }
         }
 
 
