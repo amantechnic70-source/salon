@@ -8,8 +8,8 @@ import {
   User,
   UserSchema,
 } from '../schemas/user.schema';
+
 import { MailModule } from 'src/mail/mail.module';
-import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
 
 @Module({
   imports: [
@@ -19,14 +19,21 @@ import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
         schema: UserSchema,
       },
     ]),
+
     MailModule,
-    MailQueueModule
   ],
 
-  controllers: [UsersController],
+  controllers: [
+    UsersController,
+  ],
 
-  providers: [UsersService],
+  providers: [
+    UsersService,
+  ],
 
-  exports: [UsersService, MongooseModule],
+  exports: [
+    UsersService,
+    MongooseModule,
+  ],
 })
-export class UsersModule { }
+export class UsersModule {}

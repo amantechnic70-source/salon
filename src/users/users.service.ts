@@ -14,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { generateUserId } from 'src/common/utils/generate-user-id';
 import { GetUsersDto } from './dto/get-users.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -23,6 +24,7 @@ export class UsersService {
         private readonly userModel: Model<UserDocument>,
         private readonly redisService: RedisService,
         private readonly mailQueueService: MailQueueService,
+        private readonly mailService: MailService,
     ) { }
 
 
@@ -100,11 +102,17 @@ export class UsersService {
 
         // Send OTP email using Mail Queue
 
-        await this.mailQueueService.sendOTPEmail({
+        // await this.mailQueueService.sendOTPEmail({
+        //     email: dto.email,
+        //     subject: 'Verify Your Email',
+        //     html,
+
+        // });
+
+        await this.mailService.sendMail({
             email: dto.email,
             subject: 'Verify Your Email',
             html,
-
         });
 
 

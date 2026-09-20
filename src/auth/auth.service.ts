@@ -27,6 +27,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from 'src/redis/redis.service';
 import { MailQueueService } from 'src/queues/mail-queue/mail-queue.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,7 @@ export class AuthService {
         private readonly redisService: RedisService,
         private readonly mailQueueService: MailQueueService,
         private readonly jwtService: JwtService,
+        private readonly mailService: MailService,
     ) { }
 
     async register(dto: RegisterDto) {
@@ -358,7 +360,13 @@ export class AuthService {
         </p>
     `;
 
-        await this.mailQueueService.sendForgotPasswordEmail({
+        // await this.mailQueueService.sendForgotPasswordEmail({
+        //     email: user.email,
+        //     subject: 'Reset Password',
+        //     html,
+        // });
+
+        await this.mailService.sendMail({
             email: user.email,
             subject: 'Reset Password',
             html,

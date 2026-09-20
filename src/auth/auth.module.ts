@@ -11,6 +11,7 @@ import { MailQueueModule } from 'src/queues/mail-queue/mail-queue.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { StringValue } from "ms";
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
     RedisModule,
     MailQueueModule,
+    MailModule
   ],
 
   controllers: [AuthController],
