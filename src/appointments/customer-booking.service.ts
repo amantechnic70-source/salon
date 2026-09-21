@@ -566,56 +566,30 @@ export class CustomerBookingService {
 
     }
 
-    async getBranchStaff(
-        branchId: string,
-    ) {
+    async getBranchStaff(branchId: string) {
 
-        const branch =
-            await this.branchModel.findOne({
-                _id: branchId,
-                isDeleted: false,
-                isActive: true,
-
-            });
+        const branch = await this.branchModel.findOne({
+            _id: branchId,
+            isDeleted: false,
+            isActive: true,
+        });
 
         if (!branch) {
-
-            throw new BadRequestException(
-                'Branch not found.',
-            );
-
+            throw new BadRequestException('Branch not found.');
         }
 
-        const staffs =
-            await this.staffModel.find({
-                branchId,
-                salonId: branch.salonId,
-                isDeleted: false,
-                isActive: true,
-
-            })
-                .select(`
-            staffId
-            name
-            profileImage
-            designation
-            experience
-        `)
-                .sort({
-                    name: 1,
-                });
+        const staffs = await this.staffModel.find({
+            branchId: branch._id,
+            salonId: branch.salonId,
+            isDeleted: false,
+            isActive: true,
+        });
 
         return {
-
             success: true,
-
-            message:
-                'Branch staff fetched successfully.',
-
+            message: 'Branch staff fetched successfully.',
             data: staffs,
-
         };
-
     }
 
     async availableSlots(
@@ -639,22 +613,22 @@ export class CustomerBookingService {
 
         }
 
-        const staff =
-            await this.staffModel.findOne({
-
-                _id: query.staffId,
-                branchId: query.branchId,
-                isDeleted: false,
-                isActive: true,
-
-            });
+        const staff = await this.staffModel.findOne({
+            _id: query.staffId,
+            isDeleted: false,
+            isActive: true,
+        });
 
         if (!staff) {
-
             throw new BadRequestException(
                 'Staff not found.',
             );
+        }
 
+        if (staff.branchId.toString() !== query.branchId.toString()) {
+            throw new BadRequestException(
+                'Staff does not belong to this branch.',
+            );
         }
 
         const bookedAppointments =
