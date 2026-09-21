@@ -496,12 +496,19 @@ export class CustomerBookingService {
         query: GetSalonServicesDto,
     ) {
 
+        // ==========================================
+        // FIND SALON
+        // ==========================================
+
         const salon =
             await this.salonModel.findOne({
 
                 _id: query.salonId,
+
                 isDeleted: false,
+
                 isActive: true,
+
                 isSubscriptionActive: true,
 
             });
@@ -514,33 +521,68 @@ export class CustomerBookingService {
 
         }
 
+        // ==========================================
+        // BUILD SERVICE FILTER
+        // ==========================================
+
         const filter: any = {
+
             salonId: salon._id,
+
             isDeleted: false,
+
             isActive: true,
 
         };
 
+        // ==========================================
+        // FILTER BY BRANCH
+        // ==========================================
+
         if (query.branchId) {
 
-            filter.branchId = query.branchId;
+            if (!Types.ObjectId.isValid(query.branchId)) {
 
+                throw new BadRequestException(
+                    'Invalid branch ID.',
+                );
+
+            }
+
+            filter.branchId =
+                new Types.ObjectId(
+                    query.branchId,
+                );
         }
 
+        // ==========================================
+        // FILTER BY CATEGORY
+        // ==========================================
+
         if (query.category) {
+
             filter.category = {
-                $regex: query.category,
+
+                $regex:
+                    query.category,
+
                 $options: 'i',
 
             };
 
         }
 
-        const services =
-            await this.serviceModel.find(filter)
+        // ==========================================
+        // GET SERVICES
+        // ==========================================
 
+        const services =
+            await this.serviceModel
+                .find(filter)
                 .populate({
+
                     path: 'branchId',
+
                     select: `
                     branchId
                     name
@@ -549,21 +591,28 @@ export class CustomerBookingService {
                 `,
 
                 })
-
                 .sort({
+
                     category: 1,
+
                     name: 1,
 
                 });
 
+        // ==========================================
+        // RESPONSE
+        // ==========================================
+
         return {
 
             success: true,
-            message: 'Salon services fetched successfully.',
+
+            message:
+                'Salon services fetched successfully.',
+
             data: services,
 
         };
-
     }
 
     async getBranchStaff(branchId: string) {
