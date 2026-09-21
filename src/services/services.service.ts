@@ -170,17 +170,34 @@ export class ServicesService {
         // GENERATE SERVICE ID
         // ==========================================
 
-        const totalServices =
-            await this.serviceModel.countDocuments();
+        const lastService =
+            await this.serviceModel
+                .findOne()
+                .sort({ serviceId: -1 })
+                .select('serviceId')
+                .lean();
+
+        let nextServiceNumber = 1;
+
+        if (lastService?.serviceId) {
+
+            const lastNumber =
+                parseInt(
+                    lastService.serviceId.replace('SER', ''),
+                    10,
+                );
+
+            nextServiceNumber =
+                lastNumber + 1;
+        }
 
         const serviceId =
             `SER${String(
-                totalServices + 1,
+                nextServiceNumber,
             ).padStart(
                 6,
                 '0',
             )}`;
-
         // ==========================================
         // CALCULATE DISCOUNT PRICE
         // ==========================================
